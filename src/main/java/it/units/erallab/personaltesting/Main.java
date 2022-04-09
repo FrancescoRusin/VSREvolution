@@ -1,22 +1,16 @@
 package it.units.erallab.personaltesting;
 
+import it.units.erallab.builder.solver.DoublesStandard;
+import it.units.erallab.builder.solver.SolverBuilder;
 import it.units.erallab.hmsrobots.util.Grid;
-import it.units.erallab.locomotion.Starter;
-import it.units.erallab.personaltesting.BreakGrid;
 
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        List<String> arg=new ArrayList<String>();
-        //arg.add("episodeTime=30");
-        arg.add("shape=biped-6x4");
-        arg.add("sensorConfig=uniform-t+r-0");
-        arg.add("mapper=brainHomoDist");
-        //arg.add("solver=numGA");
-        //arg.add("nPop=2");
-        //arg.add("nEval=2");
-        Starter TEST = new Starter(arg.toArray(new String[arg.size()]));
-        TEST.run();
+        Grid<Boolean> body=Grid.create(4,4,(x,y) -> (x==0 || y==0));
+        BreakDistMLP breaker=new BreakDistMLP(body,"t+a");
+        Optional<SolverBuilder<List<Double>>> solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
+                .build("nPop=10;nEval=100");
     }
 }
