@@ -1,7 +1,10 @@
 package it.units.erallab.personaltesting;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.primitives.Doubles;
+import it.units.erallab.builder.function.MLP;
 import it.units.erallab.builder.robot.BrainHomoDistributed;
+import it.units.erallab.builder.solver.DoublesStandard;
 import it.units.erallab.hmsrobots.core.controllers.Controller;
 import it.units.erallab.hmsrobots.core.controllers.MultiLayerPerceptron;
 import it.units.erallab.hmsrobots.core.objects.Robot;
@@ -10,10 +13,15 @@ import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.locomotion.Starter;
 import it.units.malelab.jgea.core.QualityBasedProblem;
+import it.units.malelab.jgea.core.TotalOrderQualityBasedProblem;
+import it.units.malelab.jgea.core.listener.Listener;
 import it.units.malelab.jgea.core.order.PartialComparator;
+import it.units.malelab.jgea.core.solver.IterativeSolver;
+import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
 
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static it.units.erallab.hmsrobots.core.controllers.MultiLayerPerceptron.ActivationFunction.TANH;
@@ -49,5 +57,37 @@ public class BreakDistMLP implements QualityBasedProblem<double[][][],Outcome> {
 
     public PartialComparator<Outcome> qualityComparator() {
         return (x,y) -> (Doubles.compare(x.getVelocity(),y.getVelocity())>0 ? BEFORE : (Doubles.compare(x.getVelocity(),y.getVelocity())==0 ? SAME : AFTER));
+    }
+
+    public Collection<double[][][]> solve(int nPop, int nEval) {
+        Robot target = new Robot(
+                Controller.empty(),
+                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
+                        .apply(baseBody)
+        );
+        //build evolver
+        IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>,TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver =
+                new DoublesStandard(0.75, 0.05, 3, 0.35)
+                .build(Map.ofEntries(Map.entry("nPop",String.valueOf(nPop)),Map.entry("nEval",String.valueOf(nEval))))
+                .build(new BrainHomoDistributed().build(Map.of("s",String.valueOf(signals)))
+                        .compose(new MLP().build(Map.ofEntries(Map.entry("just","placeholder")))),target);
+        //optimize TODO
+        Starter.Problem problem = new Starter.Problem(
+                RobotUtils.buildRobotTransformation(transformationName, random)
+                        .andThen(buildLocomotionTask(terrainName, episodeTime, random, cacheOutcome))
+                        .andThen(o -> o.subOutcome(
+                                episodeTransientTime,
+                                episodeTime
+                        )),
+                Comparator.comparing(fitnessFunction).reversed()
+        );
+        Collection<Robot> solutions = solver.solve(problem,new Random(), Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()), listener);
+        progressMonitor.notify((float) counter / nOfRuns, String.format(
+                "(%d/%d); Done: %d solutions in %4ds",
+                counter,
+                nOfRuns,
+                solutions.size(),
+                stopwatch.elapsed(TimeUnit.SECONDS)
+        ));
     }
 }
