@@ -22,16 +22,17 @@ import it.units.malelab.jgea.core.order.PartialComparator;
 import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
+import okhttp3.Call;
 import org.dyn4j.dynamics.Settings;
 
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static it.units.erallab.hmsrobots.core.controllers.MultiLayerPerceptron.ActivationFunction.TANH;
 import static it.units.malelab.jgea.core.order.PartialComparator.PartialComparatorOutcome.*;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;
 
@@ -74,10 +75,14 @@ public class BreakDistMLP {
         return null;
     }
 
-    public record Problem(
-            Function<List<Double>, Outcome> qualityFunction, Comparator<Outcome> totalOrderComparator
-    ) implements TotalOrderQualityBasedProblem<List<Double>, Outcome> {
+    public Robot buildHomoDistRobot(TimedRealFunction optFunction,Grid<Boolean> body) {
+        return new Robot(new DistributedSensing(signals,
+                Grid.create(body.getW(), body.getH(), optFunction.getInputDimension()),
+                Grid.create(body.getW(), body.getH(), optFunction.getOutputDimension()),
+                Grid.create(body.getW(), body.getH(), SerializationUtils.clone(optFunction))),
+                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(body));
     }
+
 
     public DistributedSensing solve(int nPop, int nEval) {
         Robot target = new Robot(
@@ -93,7 +98,7 @@ public class BreakDistMLP {
         Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
         Collection<Robot> solutions = new ArrayList<>();
         try {
-            solutions = solver.solve(problem, new Random(), Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+            solutions = solver.solve(problem, new Random(), newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
         } catch (SolverException e) {
             System.out.println(String.format("Couldn't solve due to %s", e));
         }
@@ -104,63 +109,88 @@ public class BreakDistMLP {
         TimedRealFunction optFunction = solve(nPop, nEval).getFunctions().get(nonNullVoxel()[0], nonNullVoxel()[1]);
         Set<Grid<Boolean>>[] brokenGrids = BreakGrid.crush(baseBody, editDistance);
         List<Double>[] results = new List[editDistance + 1];
-        List result = new ArrayList();
-        for (int i = 0; i < editDistance + 1; i++) {
-            result.clear();
-            for (Grid<Boolean> grid : brokenGrids[i]) {
-                result.add(task.apply(new Robot(new DistributedSensing(signals,
-                                Grid.create(baseBody.getW(), baseBody.getH(), optFunction.getInputDimension()),
-                                Grid.create(baseBody.getW(), baseBody.getH(), optFunction.getOutputDimension()),
-                                Grid.create(baseBody.getW(), baseBody.getH(), SerializationUtils.clone(optFunction))),
-                                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(grid)))
-                        .getDistance());
-            }
-            results[i] = new ArrayList<>(result);
+        List<Callable<Double>> parallelEvaluation = new ArrayList<>();
+        List<Double> tempresults = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        results[0] = new ArrayList<>(List.of((task.apply(buildHomoDistRobot(optFunction, baseBody))
+                .getDistance())));
+        for (int i = 0; i < editDistance; i++) {
+            parallelEvaluation.addAll(brokenGrids[i + 1].stream()
+                    .map(g -> (Callable<Double>) () -> {
+                        return task.apply(buildHomoDistRobot(optFunction, g))
+                                .getDistance();
+                    }).toList());
+        }
+        try {
+            tempresults = new ArrayList<>(executor.invokeAll(parallelEvaluation)
+                    .stream()
+                    .map(f -> {
+                        try {
+                            return f.get();
+                        } catch (Exception e) {
+                            System.exit(10);
+                            return null;
+                        }
+                    })
+                    .toList());
+        } catch (Exception e) {
+            System.out.println(String.format("Something went wrong"));
+            System.exit(2);
+        }
+        int counter=0;
+        for(int i=0;i<editDistance;i++){
+            results[i+1]=tempresults.subList(counter,counter+brokenGrids[i+1].size());
+            counter+=brokenGrids[i+1].size();
         }
         return results;
     }
 
     public List<Double>[] distanceRunWithView(int editDistance, int nPop, int nEval) {
-        DistributedSensing hahaController = solve(nPop, nEval);
-        TimedRealFunction optFunction = hahaController.getFunctions().get(nonNullVoxel()[0], nonNullVoxel()[1]);
+        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions().get(nonNullVoxel()[0], nonNullVoxel()[1]);
         Set<Grid<Boolean>>[] brokenGrids = BreakGrid.crush(baseBody, editDistance);
+        List<Grid<Boolean>>[] brokenGrids1 = new List[editDistance+1];
+        for(int i=0; i<editDistance+1; i++){
+            brokenGrids1[i]=brokenGrids[i].stream().toList();
+        }
         List<Double>[] results = new List[editDistance + 1];
-        List result = new ArrayList();
-        double placeholder1;
-        double placeholder2;
-        Grid<Boolean> bestNow;
-        int a = (int) (Math.ceil((editDistance + 1) / Math.ceil(Math.sqrt(editDistance + 1))) * (Math.ceil(Math.sqrt(editDistance + 1))));
-        Grid<Boolean>[] bestForGen = new Grid[a];
-        for (int i = 0; i < editDistance + 1; i++) {
-            result.clear();
-            placeholder2 = 0;
-            bestNow = baseBody;
-            for (Grid<Boolean> grid : brokenGrids[i]) {
-                placeholder1 = task.apply(new Robot(new DistributedSensing(signals,
-                                Grid.create(baseBody.getW(), baseBody.getH(), optFunction.getInputDimension()),
-                                Grid.create(baseBody.getW(), baseBody.getH(), optFunction.getOutputDimension()),
-                                Grid.create(baseBody.getW(), baseBody.getH(), SerializationUtils.clone(optFunction))),
-                                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(grid)))
-                        .getDistance();
-                result.add(placeholder1);
-                if (placeholder1 > placeholder2) {
-                    placeholder2 = placeholder1;
-                    bestNow = grid;
-                }
-            }
-            bestForGen[i] = Grid.copy(bestNow);
-            results[i] = new ArrayList<>(result);
+        List<Callable<Double>> parallelEvaluation = new ArrayList<>();
+        List<Double> tempresults = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        results[0] = new ArrayList<>(List.of((task.apply(buildHomoDistRobot(optFunction, baseBody))
+                .getDistance())));
+        for (int i = 0; i < editDistance; i++) {
+            parallelEvaluation.addAll(brokenGrids1[i + 1].stream()
+                    .map(g -> (Callable<Double>) () -> {
+                        return task.apply(buildHomoDistRobot(optFunction, g))
+                                .getDistance();
+                    }).toList());
         }
-        int counter = editDistance + 1;
-        while (a != counter) {
-            bestForGen[counter] = baseBody;
-            counter += 1;
+        try {
+            tempresults = new ArrayList<>(executor.invokeAll(parallelEvaluation)
+                    .stream()
+                    .map(f -> {
+                        try {
+                            return f.get();
+                        } catch (Exception e) {
+                            System.exit(10);
+                            return null;
+                        }
+                    })
+                    .toList());
+        } catch (Exception e) {
+            System.out.println(String.format("Something went wrong"));
+            System.exit(2);
         }
-        List bestRobots = Arrays.stream(bestForGen).map(g -> new Robot(new DistributedSensing(signals,
-                Grid.create(baseBody.getW(), baseBody.getH(), optFunction.getInputDimension()),
-                Grid.create(baseBody.getW(), baseBody.getH(), optFunction.getOutputDimension()),
-                Grid.create(baseBody.getW(), baseBody.getH(), SerializationUtils.clone(optFunction))),
-                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(g))).toList();
+        Grid<Boolean>[] bestForGen = new Grid[editDistance+1];
+        bestForGen[0] = baseBody;
+        int counter=0;
+        for(int i=0;i<editDistance;i++){
+            results[i+1]=tempresults.subList(counter,counter+brokenGrids[i+1].size());
+            bestForGen[i+1]=brokenGrids1[i+1].get(results[i+1].indexOf(Collections.max(results[i+1])));
+            counter+=brokenGrids[i+1].size();
+        }
+        List bestRobots = Arrays.stream(bestForGen).map(g -> buildHomoDistRobot(optFunction,g)).toList();
+        executor.shutdown();
         GridOnlineViewer.run(new Locomotion(episodeT, Locomotion.createTerrain("flat"), new Settings()), bestRobots);
         return results;
     }
