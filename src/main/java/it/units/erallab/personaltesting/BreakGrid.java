@@ -5,6 +5,54 @@ import it.units.erallab.hmsrobots.util.Grid;
 import java.util.*;
 
 public class BreakGrid {
+
+    public static int[] nonNullVoxel(Grid<Boolean> grid) {
+        for (int i = 0; i < grid.getW(); i++) {
+            for (int j = 0; j < grid.getH(); j++) {
+                if (grid.get(i, j)) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        return null;
+    }
+
+    public static boolean isConnected(Grid<Boolean> grid) {
+        int counter=0;
+        final int w=grid.getW();
+        final int h=grid.getH();
+        while(!grid.get(counter%w,(int) Math.floor(counter/w)) && counter<w*h){
+            counter+=1;
+        }
+        if(counter==w*h){
+            return false;
+        }
+        final int basedCounter = counter;
+        Grid<Boolean> scan = Grid.create(w,h,(x,y) -> x==basedCounter%w && y==(int) Math.floor(basedCounter/w));
+        while(counter<w-1 && grid.get(counter%w+1,(int) Math.floor(counter/w))){
+            scan.set(counter%w+1,(int) Math.floor(counter/w),true);
+            counter+=1;
+        }
+        for(int i=(int) Math.floor(counter/w)+1;i<h;i++){
+            if(grid.get(0,i) && scan.get(0,i-1)){
+                scan.set(0,i,true);
+            }
+            for(int j=1;j<w;j++){
+                if(grid.get(j,i) && (scan.get(j,i-1) || scan.get(j-1,i))){
+                    scan.set(i,j,true);
+                }
+            }
+        }
+        for(int c=0;c<w*h;c++){
+            if((grid.get(c%w,(int) Math.floor(c/w)) && !scan.get(c%w,(int) Math.floor(c/w))) ||
+                    (!grid.get(c%w,(int) Math.floor(c/w)) && scan.get(c%w,(int) Math.floor(c/w)))){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public static Grid<Boolean> getPossibilities(Grid<Boolean> grid) {
         Grid<Boolean> possibilities = Grid.create(grid.getW(), grid.getH());
         for (int w = 1; w < grid.getW() - 1; w++) {

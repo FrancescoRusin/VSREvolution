@@ -64,17 +64,6 @@ public class BreakDistMLP {
         GridOnlineViewer.run(locomotion, new Robot(controller, RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(baseBody)));
     }
 
-    public int[] nonNullVoxel() {
-        for (int i = 0; i < baseBody.getW(); i++) {
-            for (int j = 0; j < baseBody.getH(); j++) {
-                if (baseBody.get(i, j)) {
-                    return new int[]{i, j};
-                }
-            }
-        }
-        return null;
-    }
-
     public Robot buildHomoDistRobot(TimedRealFunction optFunction,Grid<Boolean> body) {
         return new Robot(new DistributedSensing(signals,
                 Grid.create(body.getW(), body.getH(), optFunction.getInputDimension()),
@@ -106,7 +95,8 @@ public class BreakDistMLP {
     }
 
     public List<Double>[] distanceRun(int editDistance, int nPop, int nEval) {
-        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions().get(nonNullVoxel()[0], nonNullVoxel()[1]);
+        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
+                .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
         Set<Grid<Boolean>>[] brokenGrids = BreakGrid.crush(baseBody, editDistance);
         List<Double>[] results = new List[editDistance + 1];
         List<Callable<Double>> parallelEvaluation = new ArrayList<>();
@@ -142,11 +132,13 @@ public class BreakDistMLP {
             results[i+1]=tempresults.subList(counter,counter+brokenGrids[i+1].size());
             counter+=brokenGrids[i+1].size();
         }
+        executor.shutdown();
         return results;
     }
 
     public List<Double>[] distanceRunWithView(int editDistance, int nPop, int nEval) {
-        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions().get(nonNullVoxel()[0], nonNullVoxel()[1]);
+        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
+                .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
         Set<Grid<Boolean>>[] brokenGrids = BreakGrid.crush(baseBody, editDistance);
         List<Grid<Boolean>>[] brokenGrids1 = new List[editDistance+1];
         for(int i=0; i<editDistance+1; i++){
