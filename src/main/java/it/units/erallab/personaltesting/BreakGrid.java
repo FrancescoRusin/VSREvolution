@@ -77,7 +77,6 @@ public class BreakGrid {
     }
 
     public static Set<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int editDistance) {
-        Grid<Boolean> possibilities = BreakGrid.getPossibilities(baseline);
         Set<Grid<Boolean>>[] totalPossibilities = new Set[editDistance + 1];
         totalPossibilities[0] = Set.of(Grid.copy(baseline));
         Set<Grid<Boolean>> temporaryPossibilities = new HashSet();
