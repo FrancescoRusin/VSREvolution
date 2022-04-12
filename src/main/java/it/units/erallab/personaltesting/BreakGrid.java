@@ -46,10 +46,18 @@ public class BreakGrid {
         while (!nextInLine.isEmpty()) {
             next = nextInLine.remove(0);
             for (Dir dir : Dir.values()) {
-                if (grid.get(next[0] + dir.dx, next[1] + dir.dy)) {
-                    scan.set(next[0] + dir.dx, next[1] + dir.dy, true);
-                    nextInLine.add(new int[]{next[0]+dir.dx,next[1]+dir.dy});
+                if(!Objects.isNull(grid.get(next[0] + dir.dx, next[1] + dir.dy))) {
+                    if (grid.get(next[0] + dir.dx, next[1] + dir.dy) && !scan.get(next[0] + dir.dx, next[1] + dir.dy)) {
+                        scan.set(next[0] + dir.dx, next[1] + dir.dy, true);
+                        nextInLine.add(new int[]{next[0] + dir.dx, next[1] + dir.dy});
+                    }
                 }
+            }
+        }
+        for(counter=0;counter<w*h;counter++){
+            if((!grid.get(counter % w, (int) Math.floor(counter / w)) && scan.get(counter % w, (int) Math.floor(counter / w))) ||
+                    (grid.get(counter % w, (int) Math.floor(counter / w)) && !scan.get(counter % w, (int) Math.floor(counter / w)))){
+                return false;
             }
         }
         return true;
@@ -127,7 +135,7 @@ public class BreakGrid {
         return possibilities;
     }
 
-    public static Set<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int editDistance) {
+    public static List<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int editDistance) {
         Set<Grid<Boolean>>[] totalPossibilities = new Set[editDistance + 1];
         totalPossibilities[0] = Set.of(Grid.copy(baseline));
         Set<Grid<Boolean>> temporaryPossibilities = new HashSet();
@@ -162,6 +170,10 @@ public class BreakGrid {
             temporaryPossibilities.clear();
             throwaway.clear();
         }
-        return totalPossibilities;
+        List<Grid<Boolean>>[] listPossibilities = new List[editDistance+1];
+        for(int i=0; i<editDistance+1;i++){
+            listPossibilities[i]=totalPossibilities[i].stream().filter(BreakGrid::isConnected).toList();
+        }
+        return listPossibilities;
     }
 }
