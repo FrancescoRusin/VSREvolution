@@ -17,36 +17,39 @@ public class BreakGrid {
         return null;
     }
 
-    public static boolean isConnected(Grid<Boolean> grid) {
-        int counter=0;
-        final int w=grid.getW();
-        final int h=grid.getH();
-        while(!grid.get(counter%w,(int) Math.floor(counter/w)) && counter<w*h){
-            counter+=1;
+    protected enum Dir{
+        N(0,1), E(1,0), S(0,-1), W(-1,0);
+        final int dx;
+        final int dy;
+
+        Dir(int dx, int dy){
+            this.dx=dx;
+            this.dy=dy;
         }
-        if(counter==w*h){
+    }
+
+    public static boolean isConnected(Grid<Boolean> grid) {
+        int counter = 0;
+        final int w = grid.getW();
+        final int h = grid.getH();
+        while (!grid.get(counter % w, (int) Math.floor(counter / w)) && counter < w * h) {
+            counter += 1;
+        }
+        if (counter == w * h) {
             return false;
         }
         final int basedCounter = counter;
-        Grid<Boolean> scan = Grid.create(w,h,(x,y) -> x==basedCounter%w && y==(int) Math.floor(basedCounter/w));
-        while(counter<w-1 && grid.get(counter%w+1,(int) Math.floor(counter/w))){
-            scan.set(counter%w+1,(int) Math.floor(counter/w),true);
-            counter+=1;
-        }
-        for(int i=(int) Math.floor(counter/w)+1;i<h;i++){
-            if(grid.get(0,i) && scan.get(0,i-1)){
-                scan.set(0,i,true);
-            }
-            for(int j=1;j<w;j++){
-                if(grid.get(j,i) && (scan.get(j,i-1) || scan.get(j-1,i))){
-                    scan.set(i,j,true);
+        Grid<Boolean> scan = Grid.create(w, h, (x, y) -> x == basedCounter % w && y == (int) Math.floor(basedCounter / w));
+        List<int[]> nextInLine = new ArrayList<>();
+        nextInLine.add(new int[]{counter % w, (int) Math.floor(counter / w)});
+        int[] next;
+        while (!nextInLine.isEmpty()) {
+            next = nextInLine.remove(0);
+            for (Dir dir : Dir.values()) {
+                if (grid.get(next[0] + dir.dx, next[1] + dir.dy)) {
+                    scan.set(next[0] + dir.dx, next[1] + dir.dy, true);
+                    nextInLine.add(new int[]{next[0]+dir.dx,next[1]+dir.dy});
                 }
-            }
-        }
-        for(int c=0;c<w*h;c++){
-            if((grid.get(c%w,(int) Math.floor(c/w)) && !scan.get(c%w,(int) Math.floor(c/w))) ||
-                    (!grid.get(c%w,(int) Math.floor(c/w)) && scan.get(c%w,(int) Math.floor(c/w)))){
-                return false;
             }
         }
         return true;
