@@ -3,11 +3,9 @@ package it.units.erallab.personaltesting;
 import com.google.common.primitives.Doubles;
 import it.units.erallab.builder.function.MLP;
 import it.units.erallab.builder.robot.BrainHomoDistributed;
+import it.units.erallab.builder.robot.BrainHomoStepDistributed;
 import it.units.erallab.builder.solver.DoublesStandard;
-import it.units.erallab.hmsrobots.core.controllers.Controller;
-import it.units.erallab.hmsrobots.core.controllers.DistributedSensing;
-import it.units.erallab.hmsrobots.core.controllers.MultiLayerPerceptron;
-import it.units.erallab.hmsrobots.core.controllers.TimedRealFunction;
+import it.units.erallab.hmsrobots.core.controllers.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
@@ -44,8 +42,9 @@ public class BreakDistMLP {
     private final String terrainName;
     private final boolean diversity;
     private final Function<Robot, Outcome> task;
+    private final double step;
 
-    public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType, int signals, double episodeT, String terrainName, boolean diversity) {
+    public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType, int signals, double episodeT, String terrainName, boolean diversity, double step) {
         this.baseBody = baseBody;
         this.sensorsType = sensorsType;
         this.signals = signals;
@@ -53,10 +52,11 @@ public class BreakDistMLP {
         this.terrainName = terrainName;
         this.diversity = diversity;
         this.task = Starter.buildLocomotionTask(terrainName, episodeT, new Random(), false);
+        this.step = step;
     }
 
     public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType) {
-        this(baseBody, sensorsType, 1, 30d, "flat", false);
+        this(baseBody, sensorsType, 1, 30d, "flat", false, 0.5);
     }
 
     public void display(Controller controller) {
@@ -65,10 +65,10 @@ public class BreakDistMLP {
     }
 
     public Robot buildHomoDistRobot(TimedRealFunction optFunction, Grid<Boolean> body) {
-        return new Robot(new DistributedSensing(signals,
+        return new Robot(new StepController(new DistributedSensing(signals,
                 Grid.create(body.getW(), body.getH(), optFunction.getInputDimension()),
                 Grid.create(body.getW(), body.getH(), optFunction.getOutputDimension()),
-                Grid.create(body.getW(), body.getH(), SerializationUtils.clone(optFunction))),
+                Grid.create(body.getW(), body.getH(), SerializationUtils.clone(optFunction))),step),
                 RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(body));
     }
 
@@ -82,7 +82,8 @@ public class BreakDistMLP {
         IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver =
                 new DoublesStandard(0.75, 0.05, 3, 0.35)
                         .build(Map.ofEntries(Map.entry("nPop", String.valueOf(nPop)), Map.entry("nEval", String.valueOf(nEval)), Map.entry("diversity", String.valueOf(diversity))))
-                        .build(new BrainHomoDistributed().build(Map.of("s", String.valueOf(signals)))
+                        .build(new BrainHomoStepDistributed().build(
+                                Map.ofEntries(Map.entry("s", String.valueOf(signals)),Map.entry("step",String.valueOf(step))))
                                 .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
         Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
         Collection<Robot> solutions = new ArrayList<>();
@@ -91,7 +92,8 @@ public class BreakDistMLP {
         } catch (SolverException e) {
             System.out.println(String.format("Couldn't solve due to %s", e));
         }
-        return (DistributedSensing) solutions.stream().map(Robot::getController).toList().get(0);
+        StepController a = (StepController) solutions.stream().map(Robot::getController).toList().get(0);
+        return (DistributedSensing) a.getController();
     }
 
     public List<Double>[] distanceRun(int editDistance, int nPop, int nEval, int nSmpl) {

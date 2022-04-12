@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 public class Main {
     public static void main(String[] args) {
         Grid<Boolean>[] bodies = new Grid[3];
-        bodies[0] = Grid.create(4, 3, (x, y) -> Math.abs(x - 1.5) > 1 || y > 0);
-        bodies[1] = Grid.create(7, 2, (x, y) -> y == 1 || x % 2 == 0);
-        bodies[2] = Grid.create(5, 2, (x, y) -> true);
+        bodies[0] = Grid.create(6, 4, (x, y) -> (Math.abs(x - 2.5) > 1 || y > 0) && x*(x-5)!=0 && y!=3);
+        bodies[1] = Grid.create(9, 3, (x, y) -> (y == 1 || x % 2 == 1) && x*(x-8)!=0 && y!=2);
+        bodies[2] = Grid.create(7, 3, (x, y) -> x*(x-6)!=0 && y!=2);
         String[] names = new String[3];
         names[0] = "biped";
         names[1] = "comb";
@@ -29,7 +29,7 @@ public class Main {
         for (int counter = 0; counter < 10; counter++) {
             for (int a = 0; a < 3; a++) {
                 List<Double>[] distanceRuns =
-                        new BreakDistMLP(bodies[a], "t+r+vx+vy", 1, 30, "hilly-1-10-0", false)
+                        new BreakDistMLP(bodies[a], "t+r+vx+vy", 1, 30, "flat", false, 0.2)
                                 .distanceRun(3, 100, 10000, 10);
                 distanceRunsString = new String();
                 for (List<Double> distanceRun : distanceRuns) {
