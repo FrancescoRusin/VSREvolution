@@ -29,7 +29,7 @@ public class Main {
         for (int counter = 0; counter < 10; counter++) {
             for (int a = 0; a < 3; a++) {
                 List<Double>[] distanceRuns =
-                        new BreakDistMLP(bodies[a], "t+r+vx+vy", 1, 30, "flat", false, 0.2)
+                        new BreakDistMLP(bodies[a], "t+a+vx+vy", 1, 30, "flat", false, 0.2)
                                 .distanceRun(3, 100, 10000, 10);
                 distanceRunsString = new String();
                 for (List<Double> distanceRun : distanceRuns) {

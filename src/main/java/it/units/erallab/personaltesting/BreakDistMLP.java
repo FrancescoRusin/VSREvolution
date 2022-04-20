@@ -93,7 +93,7 @@ public class BreakDistMLP {
             System.out.println(String.format("Couldn't solve due to %s", e));
         }
         StepController a = (StepController) solutions.stream().map(Robot::getController).toList().get(0);
-        return (DistributedSensing) a.getController();
+        return (DistributedSensing) a.getInnermostController();
     }
 
     public List<Double>[] distanceRun(int editDistance, int nPop, int nEval, int nSmpl) {
