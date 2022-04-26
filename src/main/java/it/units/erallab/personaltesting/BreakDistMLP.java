@@ -220,4 +220,44 @@ public class BreakDistMLP {
         GridOnlineViewer.run(new Locomotion(episodeT, Locomotion.createTerrain(terrainName), new Settings()), bestRobots);
         return results;
     }
+
+    public List<Double>[] distanceEvolveRun(int editDistance, int nPop, int nEval, int nSmpl) {
+        List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
+        List<Grid<Boolean>>[] brokenGrids = new List[editDistance + 1];
+        List<Grid<Boolean>> tempGrids = new ArrayList<>();
+        brokenGrids[0] = totalGrids[0];
+        Random random = new Random();
+        Robot target;
+        IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
+        Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
+        List<Robot>[] solutions = new List[editDistance + 1];
+        List<Double>[] results = new List[editDistance + 1];
+        for (int c = 1; c < editDistance + 1; c++)
+            for(int i=0;i<editDistance;i++) {
+                for (Grid<Boolean> grid : brokenGrids[i]) {
+                    target = new Robot(
+                            Controller.empty(),
+                            RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
+                                    .apply(grid)
+                    );
+                    solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
+                            .build(Map.ofEntries(Map.entry("nPop", String.valueOf(nPop)), Map.entry("nEval", String.valueOf(nEval)), Map.entry("diversity", String.valueOf(diversity))))
+                            .build(new BrainHomoStepDistributed().build(
+                                            Map.ofEntries(Map.entry("s", String.valueOf(signals)), Map.entry("step", String.valueOf(step))))
+                                    .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
+                    try {
+                        solutions[i].add(solver.solve(problem, new Random(), newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
+                                .stream().toList().get(0));
+                    } catch (SolverException e) {
+                        System.out.println(String.format("Couldn't solve due to %s", e));
+                    }
+                }
+            }
+        int counter = 0;
+        for (int i = 0; i < editDistance; i++) {
+            results[i + 1] = tempresults.subList(counter, counter + brokenGrids[i + 1].size());
+            counter += brokenGrids[i + 1].size();
+        }
+        return results;
+    }
 }
