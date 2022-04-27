@@ -10,6 +10,7 @@ import org.dyn4j.dynamics.Settings;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,7 @@ public class Main {
         String distanceRunsString;
         String temp;
         BufferedWriter writer;
-        for (int counter = 0; counter < 10; counter++) {
+        /*for (int counter = 0; counter < 10; counter++) {
             for (int a = 0; a < 3; a++) {
                 List<Double>[] distanceRuns =
                         new BreakDistMLP(bodies[a], "t+a+vx+vy", 1, 30, "flat", false, 0.2)
@@ -49,6 +50,16 @@ public class Main {
                 }
             }
         }
-        System.exit(0);
+        System.exit(0);*/
+        List<Double>[] distanceRuns =
+                new BreakDistMLP(bodies[0], "t+a+vx+vy", 1, 10, "flat", false, 0.2)
+                        .distanceEvolveRunWithView(3, 20, 200, 4);
+        DecimalFormat df = new DecimalFormat("####.###");
+        for(int i=0; i<distanceRuns.length;i++){
+            for(Double num : distanceRuns[i]){
+                System.out.print(df.format(num+17d)+"  ");
+            }
+            System.out.println("");
+        }
     }
 }
