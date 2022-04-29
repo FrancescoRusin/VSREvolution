@@ -27,11 +27,11 @@ public class Main {
         String distanceRunsString;
         String temp;
         BufferedWriter writer;
-        /*for (int counter = 0; counter < 10; counter++) {
+        for (int counter = 0; counter < 10; counter++) {
             for (int a = 0; a < 3; a++) {
                 List<Double>[] distanceRuns =
                         new BreakDistMLP(bodies[a], "t+a+vx+vy", 1, 30, "flat", false, 0.2)
-                                .distanceRun(3, 100, 10000, 10);
+                                .distanceEvolveRun(3, 100, 10000, 10);
                 distanceRunsString = new String();
                 for (List<Double> distanceRun : distanceRuns) {
                     temp = "";
@@ -39,10 +39,10 @@ public class Main {
                         temp += s.toString() + ",";
                     }
                     temp = temp.substring(0, temp.length() - 1);
-                    distanceRunsString += temp + ";\n";
+                    distanceRunsString += temp + "\n";
                 }
                 try {
-                    writer = new BufferedWriter(new FileWriter(names[a] + "_" + (counter + 1) + ".csv"));
+                    writer = new BufferedWriter(new FileWriter(names[a] + "_postevolve_" + (counter + 1) + ".csv"));
                     writer.write(distanceRunsString);
                     writer.close();
                 } catch (IOException e) {
@@ -50,16 +50,6 @@ public class Main {
                 }
             }
         }
-        System.exit(0);*/
-        List<Double>[] distanceRuns =
-                new BreakDistMLP(bodies[0], "t+a+vx+vy", 1, 10, "flat", false, 0.2)
-                        .distanceEvolveRunWithView(3, 20, 200, 4);
-        DecimalFormat df = new DecimalFormat("####.###");
-        for(int i=0; i<distanceRuns.length;i++){
-            for(Double num : distanceRuns[i]){
-                System.out.print(df.format(num+17d)+"  ");
-            }
-            System.out.println("");
-        }
+        System.exit(0);
     }
 }
