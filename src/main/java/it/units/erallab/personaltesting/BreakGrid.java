@@ -135,14 +135,14 @@ public class BreakGrid {
         return possibilities;
     }
 
-    public static List<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int editDistance) {
-        Set<Grid<Boolean>>[] totalPossibilities = new Set[editDistance + 1];
+    public static List<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int maxEditDistance) {
+        Set<Grid<Boolean>>[] totalPossibilities = new Set[maxEditDistance + 1];
         totalPossibilities[0] = Set.of(Grid.copy(baseline));
         Set<Grid<Boolean>> temporaryPossibilities = new HashSet();
         Set<Grid<Boolean>> throwaway = new HashSet();
         Grid<Boolean> placeholder;
         Grid<Boolean> actualPossibilities;
-        for (int counter = 0; counter < editDistance; counter++) {
+        for (int counter = 0; counter < maxEditDistance; counter++) {
             for (Grid<Boolean> entry : totalPossibilities[counter]) {
                 actualPossibilities = BreakGrid.getPossibilities(entry);
                 for (int i = 0; i < baseline.getW(); i++) {
@@ -170,8 +170,8 @@ public class BreakGrid {
             temporaryPossibilities.clear();
             throwaway.clear();
         }
-        List<Grid<Boolean>>[] listPossibilities = new List[editDistance+1];
-        for(int i=0; i<editDistance+1;i++){
+        List<Grid<Boolean>>[] listPossibilities = new List[maxEditDistance+1];
+        for(int i=0; i<maxEditDistance+1;i++){
             listPossibilities[i]=totalPossibilities[i].stream().filter(BreakGrid::isConnected).toList();
         }
         return listPossibilities;
