@@ -23,6 +23,8 @@ import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
 import okhttp3.Call;
 import org.dyn4j.dynamics.Settings;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -221,7 +223,7 @@ public class BreakDistMLP {
         return results;
     }
 
-    public List<Double>[] distanceEvolveRun(int editDistance, int nPop, int nEval, int nSmpl) {
+    public List<Double>[] distanceEvolveRun(int editDistance, int nPop, int nEval, int nSmpl, String saveFile) {
         List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
         List<Grid<Boolean>>[] brokenGrids = new List[editDistance + 1];
         List<Grid<Boolean>> tempGrids = new ArrayList<>();
@@ -263,6 +265,19 @@ public class BreakDistMLP {
                 } catch (SolverException e) {
                     System.out.println(String.format("Couldn't solve due to %s", e));
                 }
+            }
+        }
+        if(!Objects.isNull(saveFile)){
+            String placeholder = "";
+            for(int i=0; i<editDistance+1;i++){
+                placeholder+=String.join(",",solutions[i].stream().map(r -> SerializationUtils.serialize(r)).toList())+"\n";
+            }
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(saveFile));
+                writer.write(placeholder);
+                writer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         for (int i = 0; i < editDistance + 1; i++) {
