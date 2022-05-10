@@ -56,8 +56,10 @@ public class Main {
         }*/
         try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
-            List<Robot>[] lines = BreakDistMLP.deserializeRobots(PATH);
-            FileReader fIleReader = new FileReader(PATH);
+            List<Robot>[] lines = BreakDistMLP.deserializeRobots(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_biped_2.csv");
+            FileReader fileReader = new FileReader(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\biped_postevolve_2.csv");
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             List<Double>[] reslines = new List[lines.length];
             for (int i = 0; i < lines.length; i++) {
@@ -68,11 +70,11 @@ public class Main {
                 bestForGen.add(lines[i].get(reslines[i].indexOf(Collections.max(reslines[i]))));
             }
             //GridOnlineViewer.run(locomotion, bestForGen);
-            GridFileWriter.save(locomotion, bestForGen, 1000, 600, 0, 30,
-                    VideoUtils.EncoderFacility.JCODEC, new File(PATH,FILENAME.mov));
+            GridFileWriter.save(locomotion, bestForGen, 1500, 900, 0, 30,
+                    VideoUtils.EncoderFacility.JCODEC, new File(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2","temp.mov"));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.exit(0);
     }
 }
