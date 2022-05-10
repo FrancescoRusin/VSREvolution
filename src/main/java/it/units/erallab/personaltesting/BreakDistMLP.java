@@ -269,7 +269,10 @@ public class BreakDistMLP {
                                 .apply(grid)
                 );
                 solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
-                        .build(Map.ofEntries(Map.entry("nPop", String.valueOf(nPop)), Map.entry("nEval", String.valueOf(nEval)), Map.entry("diversity", String.valueOf(diversity))))
+                        .build(Map.ofEntries(
+                                Map.entry("nPop", String.valueOf(nPop)),
+                                Map.entry("nEval", String.valueOf(nEval)),
+                                Map.entry("diversity", String.valueOf(diversity))))
                         .build(new BrainHomoStepDistributed().build(
                                         Map.ofEntries(Map.entry("s", String.valueOf(signals)), Map.entry("step", String.valueOf(step))))
                                 .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);

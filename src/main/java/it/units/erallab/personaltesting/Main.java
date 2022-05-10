@@ -1,15 +1,15 @@
 package it.units.erallab.personaltesting;
 
 import it.units.erallab.hmsrobots.behavior.PoseUtils;
-import it.units.erallab.hmsrobots.core.controllers.DistributedSensing;
-import it.units.erallab.hmsrobots.core.controllers.MultiLayerPerceptron;
-import it.units.erallab.hmsrobots.core.controllers.StepController;
+import it.units.erallab.hmsrobots.core.controllers.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
+import it.units.erallab.hmsrobots.viewers.GridFileWriter;
 import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
+import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.*;
@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 
 public class Main {
     public static void main(String[] args) {
-        Grid<Boolean>[] bodies = new Grid[3];
+        /*Grid<Boolean>[] bodies = new Grid[3];
         bodies[0] = Grid.create(6, 4, (x, y) -> (Math.abs(x - 2.5) > 1 || y > 0) && x*(x-5)!=0 && y!=3);
         bodies[1] = Grid.create(9, 3, (x, y) -> (y == 1 || x % 2 == 1) && x*(x-8)!=0 && y!=2);
         bodies[2] = Grid.create(7, 3, (x, y) -> x*(x-6)!=0 && y!=2);
@@ -53,27 +53,26 @@ public class Main {
                     e.printStackTrace();
                 }
             }
-        }
-        /*try {
+        }*/
+        try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Robot>[] lines = BreakDistMLP.deserializeRobots(PATH);
-            List<Robot> bestForGen = new ArrayList<>();
-            for(int i=0; i< lines.length; i++){
-                bestForGen.add(Collections.max(lines[i], new Comparator<Robot>() {
-                    @Override
-                    public int compare(Robot o1, Robot o2) {
-                        return (int) Math.signum(locomotion.apply(o1).getDistance()-locomotion.apply(o2).getDistance());
-                    }
-
-                    @Override
-                    public boolean equals(Object obj) {
-                        return false;
-                    }
-                }));
+            FileReader fileReader = new FileReader(PATH);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            List<Double>[] reslines = new List[lines.length];
+            for (int i = 0; i < lines.length; i++) {
+                reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(s -> Double.parseDouble(s)).toList();
             }
-            GridOnlineViewer.run(locomotion,bestForGen);
-        } catch (IOException e) {
+            List<Robot> bestForGen = new ArrayList<>();
+            for (int i = 0; i < lines.length; i++) {
+                bestForGen.add(lines[i].get(reslines[i].indexOf(Collections.max(reslines[i]))));
+            }
+            //GridOnlineViewer.run(locomotion, bestForGen);
+            GridFileWriter.save(locomotion, bestForGen, 1000, 600, 0, 30,
+                    VideoUtils.EncoderFacility.JCODEC, new File(PATH,FILENAME.mov));
+        } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
+        System.exit(0);
     }
 }
