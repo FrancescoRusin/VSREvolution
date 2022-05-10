@@ -57,7 +57,7 @@ public class Main {
         try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Robot>[] lines = BreakDistMLP.deserializeRobots(PATH);
-            FileReader fileReader = new FileReader(PATH);
+            FileReader fIleReader = new FileReader(PATH);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             List<Double>[] reslines = new List[lines.length];
             for (int i = 0; i < lines.length; i++) {
