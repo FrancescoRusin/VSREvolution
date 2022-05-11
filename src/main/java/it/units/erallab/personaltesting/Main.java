@@ -1,23 +1,12 @@
 package it.units.erallab.personaltesting;
 
-import it.units.erallab.hmsrobots.behavior.PoseUtils;
-import it.units.erallab.hmsrobots.core.controllers.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
-import it.units.erallab.hmsrobots.util.Grid;
-import it.units.erallab.hmsrobots.util.RobotUtils;
-import it.units.erallab.hmsrobots.util.SerializationUtils;
-import it.units.erallab.hmsrobots.viewers.GridFileWriter;
 import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
-import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.*;
-import java.nio.Buffer;
-import java.text.DecimalFormat;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Main {
     public static void main(String[] args) {
@@ -58,7 +47,7 @@ public class Main {
         try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             String form = "biped_";
-            String num = "3";
+            String num = "2";
             List<Robot>[] lines = Analyzer.deserializeRobots(
                     "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_" + form + num + ".csv");
             FileReader fileReader = new FileReader(
@@ -66,7 +55,7 @@ public class Main {
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             List<Double>[] reslines = new List[lines.length];
             for (int i = 0; i < lines.length; i++) {
-                reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(s -> Double.parseDouble(s)).toList();
+                reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList();
             }
             List<Robot> bestForGen = new ArrayList<>();
             for (int i = 0; i < lines.length; i++) {
