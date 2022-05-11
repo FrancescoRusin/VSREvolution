@@ -13,6 +13,7 @@ import it.units.erallab.hmsrobots.viewers.VideoUtils;
 import org.dyn4j.dynamics.Settings;
 
 import java.io.*;
+import java.nio.Buffer;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,10 +57,12 @@ public class Main {
         }*/
         try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
-            List<Robot>[] lines = BreakDistMLP.deserializeRobots(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_biped_2.csv");
+            String form = "biped_";
+            String num = "3";
+            List<Robot>[] lines = Analyzer.deserializeRobots(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_" + form + num + ".csv");
             FileReader fileReader = new FileReader(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\biped_postevolve_2.csv");
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\" + form + "postevolve_" + num + ".csv");
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             List<Double>[] reslines = new List[lines.length];
             for (int i = 0; i < lines.length; i++) {
@@ -69,12 +72,22 @@ public class Main {
             for (int i = 0; i < lines.length; i++) {
                 bestForGen.add(lines[i].get(reslines[i].indexOf(Collections.max(reslines[i]))));
             }
-            //GridOnlineViewer.run(locomotion, bestForGen);
-            GridFileWriter.save(locomotion, bestForGen, 1500, 900, 0, 30,
+            GridOnlineViewer.run(locomotion, bestForGen);
+            /*GridFileWriter.save(locomotion, bestForGen, 1500, 900, 0, 30,
                     VideoUtils.EncoderFacility.JCODEC, new File(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2","temp.mov"));
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2","temp.mov"));*/
         } catch (Exception e) {
             e.printStackTrace();
         }
+        /*try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("biped_2_test.csv"));
+            String result = Analyzer.resultsAndSize(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_biped_2.csv",
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\biped_postevolve_2.csv");
+            writer.write(result);
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
     }
 }

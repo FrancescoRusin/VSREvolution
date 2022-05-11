@@ -73,22 +73,6 @@ public class BreakDistMLP {
                 RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(body));
     }
 
-    public static List<Robot>[] deserializeRobots(String path) throws IOException {
-        FileReader fileReader = new FileReader(path);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line = bufferedReader.readLine();
-        List<List<Robot>> templines = new ArrayList<>();
-        while (line != null) {
-            templines.add(Arrays.stream(line.split(",")).map(s -> SerializationUtils.deserialize(s, Robot.class)).toList());
-            line = bufferedReader.readLine();
-        }
-        List<Robot>[] lines = new List[templines.size()];
-        for (int i = 0; i < lines.length; i++) {
-            lines[i] = templines.get(i).stream().toList();
-        }
-        return lines;
-    }
-
     public DistributedSensing solve(int nPop, int nEval) {
         Robot target = new Robot(
                 Controller.empty(),
