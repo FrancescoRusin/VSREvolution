@@ -48,7 +48,7 @@ public class Analyzer {
         return lines;
     }
 
-    public static Grid<Boolean> getBoolean(Robot robot){
+    public static Grid<Boolean> getBooleanBodyMatrix(Robot robot){
         Grid<Voxel> voxels = robot.getVoxels();
         return Grid.create(voxels.getW(), voxels.getH(), (x,y) -> !Objects.isNull(voxels.get(x,y)));
     }
