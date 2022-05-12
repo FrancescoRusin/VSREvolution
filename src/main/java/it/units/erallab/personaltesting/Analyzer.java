@@ -52,4 +52,10 @@ public class Analyzer {
         Grid<Voxel> voxels = robot.getVoxels();
         return Grid.create(voxels.getW(), voxels.getH(), (x,y) -> !Objects.isNull(voxels.get(x,y)));
     }
+
+    public static void write(String fileName, String string) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+        writer.write(string);
+        writer.close();
+    }
 }

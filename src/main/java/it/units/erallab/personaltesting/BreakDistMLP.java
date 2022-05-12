@@ -18,7 +18,7 @@ import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
 import org.dyn4j.dynamics.Settings;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -46,6 +46,10 @@ public class BreakDistMLP {
         this.step = step;
     }
 
+    public Grid<Boolean> getBaseBody() {
+        return this.baseBody;
+    }
+
     public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType) {
         this(baseBody, sensorsType, 1, 30d, "flat", false, 0.5);
     }
@@ -61,6 +65,10 @@ public class BreakDistMLP {
                 Grid.create(body.getW(), body.getH(), optFunction.getOutputDimension()),
                 Grid.create(body.getW(), body.getH(), SerializationUtils.clone(optFunction))), step),
                 RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(body));
+    }
+
+    public Robot buildHomoDistRobot(TimedRealFunction optFunction) {
+        return buildHomoDistRobot(optFunction, this.baseBody);
     }
 
     public DistributedSensing solve(int nPop, int nEval) {
@@ -139,17 +147,15 @@ public class BreakDistMLP {
             results[i + 1] = tempresults.subList(counter, counter + brokenGrids[i + 1].size());
             counter += brokenGrids[i + 1].size();
         }
-        if(!Objects.isNull(saveFile)){
+        if (!Objects.isNull(saveFile)) {
             String placeholder = "";
-            for(int i=0; i<editDistance+1;i++){
-                placeholder+=String.join(",",brokenGrids[i].stream()
-                        .map(g -> buildHomoDistRobot(optFunction,g))
-                        .map(SerializationUtils::serialize).toList())+"\n";
+            for (int i = 0; i < editDistance + 1; i++) {
+                placeholder += String.join(",", brokenGrids[i].stream()
+                        .map(g -> buildHomoDistRobot(optFunction, g))
+                        .map(SerializationUtils::serialize).toList()) + "\n";
             }
             try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter(saveFile));
-                writer.write(placeholder);
-                writer.close();
+                Analyzer.write(saveFile, placeholder);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -269,15 +275,13 @@ public class BreakDistMLP {
                 }
             }
         }
-        if(!Objects.isNull(saveFile)){
+        if (!Objects.isNull(saveFile)) {
             String placeholder = "";
-            for(int i=0; i<editDistance+1;i++){
-                placeholder+=String.join(",",solutions[i].stream().map(SerializationUtils::serialize).toList())+"\n";
+            for (int i = 0; i < editDistance + 1; i++) {
+                placeholder += String.join(",", solutions[i].stream().map(SerializationUtils::serialize).toList()) + "\n";
             }
             try {
-                BufferedWriter writer = new BufferedWriter(new FileWriter(saveFile));
-                writer.write(placeholder);
-                writer.close();
+                Analyzer.write(saveFile, placeholder);
             } catch (Exception e) {
                 e.printStackTrace();
             }
