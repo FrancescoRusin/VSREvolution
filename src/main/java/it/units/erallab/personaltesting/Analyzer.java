@@ -1,12 +1,19 @@
 package it.units.erallab.personaltesting;
 
 import it.units.erallab.hmsrobots.core.objects.Robot;
+import it.units.erallab.hmsrobots.core.objects.Voxel;
+import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 
 import java.io.*;
 import java.util.*;
 
 public class Analyzer {
+
+    public Analyzer(){
+    }
+
+
     public static String resultsAndSize(String robotsPath, String resultsPath) throws IOException {
         List<Robot>[] lines = deserializeRobots(robotsPath);
         FileReader fileReader = new FileReader(resultsPath);
@@ -39,5 +46,10 @@ public class Analyzer {
             lines[i] = templines.get(i).stream().toList();
         }
         return lines;
+    }
+
+    public static Grid<Boolean> getBoolean(Robot robot){
+        Grid<Voxel> voxels = robot.getVoxels();
+        return Grid.create(voxels.getW(), voxels.getH(), (x,y) -> !Objects.isNull(voxels.get(x,y)));
     }
 }

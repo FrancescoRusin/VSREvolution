@@ -54,11 +54,9 @@ public class Main {
                     "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\" + form + "postevolve_" + num + ".csv");
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             List<Double>[] reslines = new List[lines.length];
-            for (int i = 0; i < lines.length; i++) {
-                reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList();
-            }
             List<Robot> bestForGen = new ArrayList<>();
             for (int i = 0; i < lines.length; i++) {
+                reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList();
                 bestForGen.add(lines[i].get(reslines[i].indexOf(Collections.max(reslines[i]))));
             }
             GridOnlineViewer.run(locomotion, bestForGen);
