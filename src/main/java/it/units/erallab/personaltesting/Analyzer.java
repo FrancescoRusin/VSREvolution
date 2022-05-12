@@ -22,7 +22,7 @@ public class Analyzer {
         List<Integer> counter;
         String result = "";
         for (int i = 0; i < lines.length; i++) {
-            reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(s -> Double.parseDouble(s)).toList();
+            reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList();
             counter = lines[i].stream().map(r -> (int) r.getVoxels().count(v -> !Objects.isNull(v))).toList();
             for (int j = 0; j < counter.size() - 1; j++) {
                 result += reslines[i].get(j) + "+" + counter.get(j) + ",";
