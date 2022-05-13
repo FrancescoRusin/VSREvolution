@@ -63,29 +63,85 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.exit(0);*/
+        System.exit(0);
         try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
-            List<Double> results = new ArrayList<>();
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(
+            List<Double> horseResults = new ArrayList<>();
+            List<Double> talosResults = new ArrayList<>();
+            List<Double> revTalosResults = new ArrayList<>();
+            BufferedReader horseReader = new BufferedReader(new FileReader(
                     "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_results.csv"));
-            List<Robot> robots = Arrays.stream(Analyzer.deserializeRobots(
+            BufferedReader talosReader = new BufferedReader(new FileReader(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos biped\\Talos_bipeds_results.csv"));
+            BufferedReader revTalosReader = new BufferedReader(new FileReader(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Reversed Talos biped\\Reversed_Talos_bipeds_results.csv"));
+            List<Robot> horseRobots = Arrays.stream(Analyzer.deserializeRobots(
                             "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_robots.csv"))
                     .map(s -> s.get(0)).toList();
-            Integer[] sorter = new Integer[robots.size()];
-            for (int i = 0; i < robots.size(); i++) {
-                results.addAll(Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList());
+            List<Robot> talosRobots = Arrays.stream(Analyzer.deserializeRobots(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos biped\\Talos_bipeds_robots.csv"))
+                    .map(s -> s.get(0)).toList();
+            List<Robot> revTalosRobots = Arrays.stream(Analyzer.deserializeRobots(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Reversed Talos biped\\Reversed_Talos_bipeds_robots.csv"))
+                    .map(s -> s.get(0)).toList();
+            for (int i = 0; i < horseRobots.size(); i++) {
+                horseResults.addAll(Arrays.stream(horseReader.readLine().split(",")).map(Double::parseDouble).toList());
+            }
+            for (int i = 0; i < talosRobots.size(); i++) {
+                talosResults.addAll(Arrays.stream(talosReader.readLine().split(",")).map(Double::parseDouble).toList());
+            }
+            for (int i = 0; i < talosRobots.size(); i++) {
+                revTalosResults.addAll(Arrays.stream(revTalosReader.readLine().split(",")).map(Double::parseDouble).toList());
+            }
+            List<Double> bipedResults = new ArrayList<>();
+            List<Robot> bipedRobots = new ArrayList<>();
+            for(int counter = 1; counter<11;counter++){
+                bipedResults.add(Double.parseDouble(new BufferedReader(new FileReader(
+                        "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve\\biped_postevolve_"+counter+".csv"))
+                        .readLine()));
+                bipedResults.add(Double.parseDouble(new BufferedReader(new FileReader(
+                        "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Preevolve\\biped_preevolve_"+counter+".csv"))
+                        .readLine()));
+                bipedRobots.add(SerializationUtils.deserialize(new BufferedReader(new FileReader(
+                        "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve\\robots_biped_"+counter+".csv"))
+                        .readLine(),Robot.class));
+                bipedRobots.add(SerializationUtils.deserialize(new BufferedReader(new FileReader(
+                        "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Preevolve\\robots_biped_"+counter+".csv"))
+                        .readLine(),Robot.class));
+            }
+            List<Robot> best4 = new ArrayList<>();
+            best4.add(horseRobots.get(horseResults.indexOf(Collections.max(horseResults))));
+            best4.add(talosRobots.get(talosResults.indexOf(Collections.max(talosResults))));
+            best4.add(bipedRobots.get(bipedResults.indexOf(Collections.max(bipedResults))));
+            best4.add(revTalosRobots.get(revTalosResults.indexOf(Collections.max(revTalosResults))));
+            GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
+                    VideoUtils.EncoderFacility.JCODEC, new File(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_overall.mov"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
+        try {
+            Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
+            List<Double> horseResults = new ArrayList<>();
+            BufferedReader horseReader = new BufferedReader(new FileReader(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_results.csv"));
+            List<Robot> horseRobots = Arrays.stream(Analyzer.deserializeRobots(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_robots.csv"))
+                    .map(s -> s.get(0)).toList();
+            Integer[] sorter = new Integer[horseRobots.size()];
+            for (int i = 0; i < horseRobots.size(); i++) {
+                horseResults.addAll(Arrays.stream(horseReader.readLine().split(",")).map(Double::parseDouble).toList());
                 sorter[i] = i;
             }
-            Arrays.sort(sorter,(a,b) -> (int) Math.signum(results.get(b)-results.get(a)));
+            Arrays.sort(sorter,(a,b) -> (int) Math.signum(horseResults.get(b)- horseResults.get(a)));
             List<Robot> best4 = new ArrayList<>();
-            for (int a = 0; a < 4; a++) {
-                best4.add(robots.get(sorter[a]));
+            for(int i = 0; i< 4; i++){
+                best4.add(horseRobots.get(sorter[i]));
             }
-            GridOnlineViewer.run(locomotion,best4);
-            //GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
-            //        VideoUtils.EncoderFacility.JCODEC, new File(
-            //                "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_Talos_bipeds.mov"));
+            //GridOnlineViewer.run(locomotion,best4);
+            GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
+                    VideoUtils.EncoderFacility.JCODEC, new File(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_horses.mov"));
         } catch (Exception e) {
             e.printStackTrace();
         }
