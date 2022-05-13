@@ -68,9 +68,9 @@ public class Main {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> results = new ArrayList<>();
             BufferedReader bufferedReader = new BufferedReader(new FileReader(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Talos biped\\Talos_bipeds_results.csv"));
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_results.csv"));
             List<Robot> robots = Arrays.stream(Analyzer.deserializeRobots(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Talos biped\\Talos_bipeds_robots.csv"))
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_robots.csv"))
                     .map(s -> s.get(0)).toList();
             Integer[] sorter = new Integer[robots.size()];
             for (int i = 0; i < robots.size(); i++) {
@@ -82,23 +82,12 @@ public class Main {
             for (int a = 0; a < 4; a++) {
                 best4.add(robots.get(sorter[a]));
             }
-            GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
-                    VideoUtils.EncoderFacility.JCODEC, new File(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_Talos_bipeds.mov"));
+            GridOnlineViewer.run(locomotion,best4);
+            //GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
+            //        VideoUtils.EncoderFacility.JCODEC, new File(
+            //                "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_Talos_bipeds.mov"));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        /*try {
-            String[] names = new String[]{"biped", "comb", "worm"};
-            for (String name: names) {
-                for (int counter = 1; counter < 11; counter++) {
-                    Analyzer.write(name + "_" + counter + "_preevolve_size.csv", Analyzer.resultsAndSize(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Preevolve\\robots_" + name + "_" + counter + ".csv",
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Preevolve\\" + name + "_preevolve_" + counter + ".csv"));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
     }
 }
