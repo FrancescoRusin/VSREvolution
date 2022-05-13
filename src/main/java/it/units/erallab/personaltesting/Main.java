@@ -24,73 +24,79 @@ public class Main {
         String[] names = new String[]{"biped","comb","worm"};
         String distanceRunsString;
         String temp;
-        for (int counter = 0; counter < 10; counter++) {
-            for (int a = 0; a < 3; a++) {
-                List<Double>[] distanceRuns =bodies[a].distanceRun(
-                        3, 100, 10000, 10, "robots_"+names[a]+"_"+(counter+1)+".csv");
-                distanceRunsString = new String();
-                for (List<Double> distanceRun : distanceRuns) {
-                    temp = "";
-                    for (Double s : distanceRun) {
-                        temp += s.toString() + ",";
-                    }
-                    temp = temp.substring(0, temp.length() - 1);
-                    distanceRunsString += temp + "\n";
+        int [] numbers = new int[]{1,3,5,9};
+        for (int counter : numbers) {
+            List<Double>[] distanceRuns = bodies[0].distanceRun(
+                    3, 100, 10000, 10, "robots_" + names[0] + "_" + counter + ".csv");
+            distanceRunsString = new String();
+            for (List<Double> distanceRun : distanceRuns) {
+                temp = "";
+                for (Double s : distanceRun) {
+                    temp += s.toString() + ",";
                 }
-                try {
-                    Analyzer.write(names[a] + "_preevolve_" + (counter + 1) + ".csv",distanceRunsString);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                temp = temp.substring(0, temp.length() - 1);
+                distanceRunsString += temp + "\n";
             }
-        }*/
-        BreakDistMLP talosBiped = new BreakDistMLP(Grid.create(4, 3, (x, y) -> x!=2 || y!=0),
+            try {
+                Analyzer.write(names[0] + "_preevolve_" + counter + ".csv", distanceRunsString);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        System.exit(0);*/
+        /*BreakDistMLP revTalosBiped = new BreakDistMLP(Grid.create(5, 4,
+                (x, y) -> ((x>2 && y == 3) || (x!=4 && y<3 && (Math.abs(x-1.5)>1 || y!=0)))),
                 "t+a+vx+vy", 1, 30, "flat", false, 0.2);
         Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
         String results = "";
         String robots = "";
         Robot ultTalosBiped;
-        for (int counter = 0; counter < 25; counter++) {
-            ultTalosBiped = talosBiped.buildHomoDistRobot(
-                    talosBiped.solve(100,10000).getFunctions().get(0,0));
+        for (int counter = 0; counter < 20; counter++) {
+            ultTalosBiped = revTalosBiped.buildHomoDistRobot(
+                    revTalosBiped.solve(100,10000).getFunctions().get(0,0));
             results+=locomotion.apply(ultTalosBiped).getDistance()+"\n";
             robots+= SerializationUtils.serialize(ultTalosBiped)+"\n";
         }
         try {
-            Analyzer.write("Talos_bipeds_results.csv",results);
-            Analyzer.write("Talos_bipeds_robots.csv",robots);
+            Analyzer.write("Horse_results.csv",results);
+            Analyzer.write("Horse_robots.csv",robots);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        /*try {
+        System.exit(0);*/
+        try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
-            String form = "comb_";
-            String num = "9";
-            List<Robot>[] lines = Analyzer.deserializeRobots(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_" + form + num + ".csv");
-            FileReader fileReader = new FileReader(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\" + form + "postevolve_" + num + ".csv");
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            List<Double>[] reslines = new List[lines.length];
-            List<Robot> bestForGen = new ArrayList<>();
-            for (int i = 0; i < lines.length; i++) {
-                reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList();
-                bestForGen.add(lines[i].get(reslines[i].indexOf(Collections.max(reslines[i]))));
+            List<Double> results = new ArrayList<>();
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Talos biped\\Talos_bipeds_results.csv"));
+            List<Robot> robots = Arrays.stream(Analyzer.deserializeRobots(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Talos biped\\Talos_bipeds_robots.csv"))
+                    .map(s -> s.get(0)).toList();
+            Integer[] sorter = new Integer[robots.size()];
+            for (int i = 0; i < robots.size(); i++) {
+                results.addAll(Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList());
+                sorter[i] = i;
             }
-            GridOnlineViewer.run(locomotion, bestForGen);
-            //GridFileWriter.save(locomotion, bestForGen, 1500, 900, 0, 30,
-            //        VideoUtils.EncoderFacility.JCODEC, new File(
-            //                "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2","temp.mov"));
+            Arrays.sort(sorter,(a,b) -> (int) Math.signum(results.get(b)-results.get(a)));
+            List<Robot> best4 = new ArrayList<>();
+            for (int a = 0; a < 4; a++) {
+                best4.add(robots.get(sorter[a]));
+            }
+            GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
+                    VideoUtils.EncoderFacility.JCODEC, new File(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_Talos_bipeds.mov"));
         } catch (Exception e) {
             e.printStackTrace();
         }
         /*try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("biped_2_test.csv"));
-            String result = Analyzer.resultsAndSize(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\robots_biped_2.csv",
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 2\\biped_postevolve_2.csv");
-            writer.write(result);
-            writer.close();
+            String[] names = new String[]{"biped", "comb", "worm"};
+            for (String name: names) {
+                for (int counter = 1; counter < 11; counter++) {
+                    Analyzer.write(name + "_" + counter + "_preevolve_size.csv", Analyzer.resultsAndSize(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Preevolve\\robots_" + name + "_" + counter + ".csv",
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Preevolve\\" + name + "_preevolve_" + counter + ".csv"));
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }*/
