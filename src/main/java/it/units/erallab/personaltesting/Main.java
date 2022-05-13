@@ -44,27 +44,27 @@ public class Main {
             }
         }
         System.exit(0);*/
-        /*BreakDistMLP revTalosBiped = new BreakDistMLP(Grid.create(5, 4,
-                (x, y) -> ((x>2 && y == 3) || (x!=4 && y<3 && (Math.abs(x-1.5)>1 || y!=0)))),
+        BreakDistMLP talosHorse = new BreakDistMLP(Grid.create(5, 4,
+                (x, y) -> ((x > 2 && y == 3) || (x != 4 && y < 3 && (x != 2 || y != 0)))),
                 "t+a+vx+vy", 1, 30, "flat", false, 0.2);
         Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
         String results = "";
         String robots = "";
-        Robot ultTalosBiped;
+        Robot ultTalosHorse;
         for (int counter = 0; counter < 20; counter++) {
-            ultTalosBiped = revTalosBiped.buildHomoDistRobot(
-                    revTalosBiped.solve(100,10000).getFunctions().get(0,0));
-            results+=locomotion.apply(ultTalosBiped).getDistance()+"\n";
-            robots+= SerializationUtils.serialize(ultTalosBiped)+"\n";
+            ultTalosHorse = talosHorse.buildHomoDistRobot(
+                    talosHorse.solve(100, 10000).getFunctions().get(0, 0));
+            results += locomotion.apply(ultTalosHorse).getDistance() + "\n";
+            robots += SerializationUtils.serialize(ultTalosHorse) + "\n";
         }
         try {
-            Analyzer.write("Horse_results.csv",results);
-            Analyzer.write("Horse_robots.csv",robots);
+            Analyzer.write("Talos_horse_results.csv", results);
+            Analyzer.write("Talos_horse_robots.csv", robots);
         } catch (IOException e) {
             e.printStackTrace();
         }
         System.exit(0);
-        try {
+        /*try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> horseResults = new ArrayList<>();
             List<Double> talosResults = new ArrayList<>();
@@ -120,7 +120,7 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }*/
-        try {
+        /*try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> horseResults = new ArrayList<>();
             BufferedReader horseReader = new BufferedReader(new FileReader(
@@ -144,6 +144,6 @@ public class Main {
                             "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_horses.mov"));
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 }
