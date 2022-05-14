@@ -43,7 +43,7 @@ public class Main {
                 e.printStackTrace();
             }
         }
-        System.exit(0);*/
+        System.exit(0);
         BreakDistMLP talosHorse = new BreakDistMLP(Grid.create(5, 4,
                 (x, y) -> ((x > 2 && y == 3) || (x != 4 && y < 3 && (x != 2 || y != 0)))),
                 "t+a+vx+vy", 1, 30, "flat", false, 0.2);
@@ -63,8 +63,8 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.exit(0);
-        /*try {
+        System.exit(0);*/
+        try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> horseResults = new ArrayList<>();
             List<Double> talosResults = new ArrayList<>();
@@ -73,16 +73,16 @@ public class Main {
                     "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_results.csv"));
             BufferedReader talosReader = new BufferedReader(new FileReader(
                     "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos biped\\Talos_bipeds_results.csv"));
-            BufferedReader revTalosReader = new BufferedReader(new FileReader(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Reversed Talos biped\\Reversed_Talos_bipeds_results.csv"));
+            BufferedReader talosHorseReader = new BufferedReader(new FileReader(
+                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos horse\\Talos_horse_results.csv"));
             List<Robot> horseRobots = Arrays.stream(Analyzer.deserializeRobots(
                             "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_robots.csv"))
                     .map(s -> s.get(0)).toList();
             List<Robot> talosRobots = Arrays.stream(Analyzer.deserializeRobots(
                             "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos biped\\Talos_bipeds_robots.csv"))
                     .map(s -> s.get(0)).toList();
-            List<Robot> revTalosRobots = Arrays.stream(Analyzer.deserializeRobots(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Reversed Talos biped\\Reversed_Talos_bipeds_robots.csv"))
+            List<Robot> talosHorseRobots = Arrays.stream(Analyzer.deserializeRobots(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos horse\\Talos_horse_robots.csv"))
                     .map(s -> s.get(0)).toList();
             for (int i = 0; i < horseRobots.size(); i++) {
                 horseResults.addAll(Arrays.stream(horseReader.readLine().split(",")).map(Double::parseDouble).toList());
@@ -91,7 +91,7 @@ public class Main {
                 talosResults.addAll(Arrays.stream(talosReader.readLine().split(",")).map(Double::parseDouble).toList());
             }
             for (int i = 0; i < talosRobots.size(); i++) {
-                revTalosResults.addAll(Arrays.stream(revTalosReader.readLine().split(",")).map(Double::parseDouble).toList());
+                revTalosResults.addAll(Arrays.stream(talosHorseReader.readLine().split(",")).map(Double::parseDouble).toList());
             }
             List<Double> bipedResults = new ArrayList<>();
             List<Robot> bipedRobots = new ArrayList<>();
@@ -112,14 +112,15 @@ public class Main {
             List<Robot> best4 = new ArrayList<>();
             best4.add(horseRobots.get(horseResults.indexOf(Collections.max(horseResults))));
             best4.add(talosRobots.get(talosResults.indexOf(Collections.max(talosResults))));
+            best4.add(talosHorseRobots.get(revTalosResults.indexOf(Collections.max(revTalosResults))));
             best4.add(bipedRobots.get(bipedResults.indexOf(Collections.max(bipedResults))));
-            best4.add(revTalosRobots.get(revTalosResults.indexOf(Collections.max(revTalosResults))));
-            GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
-                    VideoUtils.EncoderFacility.JCODEC, new File(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_overall.mov"));
+            GridOnlineViewer.run(locomotion,best4);
+            //GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
+            //        VideoUtils.EncoderFacility.JCODEC, new File(
+            //                "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_overall.mov"));
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
         /*try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> horseResults = new ArrayList<>();
