@@ -1,8 +1,12 @@
 package it.units.erallab.personaltesting;
 
+import it.units.erallab.hmsrobots.core.controllers.DistributedSensing;
+import it.units.erallab.hmsrobots.core.controllers.StepController;
+import it.units.erallab.hmsrobots.core.controllers.TimedRealFunction;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.util.Grid;
+import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.hmsrobots.viewers.GridFileWriter;
 import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
@@ -63,7 +67,7 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.exit(0);*/
+        System.exit(0);
         try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> horseResults = new ArrayList<>();
@@ -86,11 +90,7 @@ public class Main {
                     .map(s -> s.get(0)).toList();
             for (int i = 0; i < horseRobots.size(); i++) {
                 horseResults.addAll(Arrays.stream(horseReader.readLine().split(",")).map(Double::parseDouble).toList());
-            }
-            for (int i = 0; i < talosRobots.size(); i++) {
                 talosResults.addAll(Arrays.stream(talosReader.readLine().split(",")).map(Double::parseDouble).toList());
-            }
-            for (int i = 0; i < talosRobots.size(); i++) {
                 revTalosResults.addAll(Arrays.stream(talosHorseReader.readLine().split(",")).map(Double::parseDouble).toList());
             }
             List<Double> bipedResults = new ArrayList<>();
@@ -114,14 +114,13 @@ public class Main {
             best4.add(talosRobots.get(talosResults.indexOf(Collections.max(talosResults))));
             best4.add(talosHorseRobots.get(revTalosResults.indexOf(Collections.max(revTalosResults))));
             best4.add(bipedRobots.get(bipedResults.indexOf(Collections.max(bipedResults))));
-            GridOnlineViewer.run(locomotion,best4);
-            //GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
-            //        VideoUtils.EncoderFacility.JCODEC, new File(
-            //                "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_overall.mov"));
+            GridFileWriter.save(locomotion, best4, 1500, 900, 0, 30,
+                    VideoUtils.EncoderFacility.JCODEC, new File(
+                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos", "Best_overall.mov"));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        /*try {
+        try {
             Locomotion locomotion = new Locomotion(30, Locomotion.createTerrain("flat"), new Settings());
             List<Double> horseResults = new ArrayList<>();
             BufferedReader horseReader = new BufferedReader(new FileReader(
