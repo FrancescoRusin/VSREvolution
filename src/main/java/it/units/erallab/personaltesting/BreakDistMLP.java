@@ -94,17 +94,21 @@ public class BreakDistMLP {
         return (DistributedSensing) a.getInnermostController();
     }
 
-    public List<Double>[] distanceRun(int editDistance, int nPop, int nEval, int nSmpl, String saveFile) {
+    public List<Double>[] distanceRun(int editDistance, int distanceStep, int nPop, int nEval, int nSmpl, String saveFile) {
+        if (editDistance % distanceStep != 0){
+            throw new IllegalArgumentException("Step must divide max edit distance");
+        }
         TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
                 .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
         List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
-        List<Grid<Boolean>>[] brokenGrids = new List[editDistance + 1];
+        int actualDistance = editDistance/distanceStep;
+        List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
         List<Grid<Boolean>> tempGrids = new ArrayList<>();
         brokenGrids[0] = totalGrids[0];
         Random random = new Random();
-        for (int c = 1; c < editDistance + 1; c++) {
+        for (int c = 1; c < actualDistance + 1; c++) {
             tempGrids.clear();
-            tempGrids.addAll(totalGrids[c]);
+            tempGrids.addAll(totalGrids[distanceStep * c]);
             if (tempGrids.size() <= nSmpl) {
                 brokenGrids[c] = tempGrids.stream().toList();
             } else {
@@ -114,13 +118,13 @@ public class BreakDistMLP {
                 }
             }
         }
-        List<Double>[] results = new List[editDistance + 1];
+        List<Double>[] results = new List[actualDistance + 1];
         List<Callable<Double>> parallelEvaluation = new ArrayList<>();
         List<Double> tempresults = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         results[0] = new ArrayList<>(List.of((task.apply(buildHomoDistRobot(optFunction, baseBody))
                 .getDistance())));
-        for (int i = 0; i < editDistance; i++) {
+        for (int i = 0; i < actualDistance; i++) {
             parallelEvaluation.addAll(brokenGrids[i + 1].stream()
                     .map(g -> (Callable<Double>) () -> task.apply(buildHomoDistRobot(optFunction, g))
                             .getDistance()).toList());
@@ -143,13 +147,13 @@ public class BreakDistMLP {
         }
         executor.shutdown();
         int counter = 0;
-        for (int i = 0; i < editDistance; i++) {
+        for (int i = 0; i < actualDistance; i++) {
             results[i + 1] = tempresults.subList(counter, counter + brokenGrids[i + 1].size());
             counter += brokenGrids[i + 1].size();
         }
         if (!Objects.isNull(saveFile)) {
             String placeholder = "";
-            for (int i = 0; i < editDistance + 1; i++) {
+            for (int i = 0; i < actualDistance + 1; i++) {
                 placeholder += String.join(",", brokenGrids[i].stream()
                         .map(g -> buildHomoDistRobot(optFunction, g))
                         .map(SerializationUtils::serialize).toList()) + "\n";
@@ -228,15 +232,19 @@ public class BreakDistMLP {
         return results;
     }
 
-    public List<Double>[] distanceEvolveRun(int editDistance, int nPop, int nEval, int nSmpl, String saveFile) {
+    public List<Double>[] distanceEvolveRun(int editDistance, int distanceStep, int nPop, int nEval, int nSmpl, String saveFile) {
+        if (editDistance % distanceStep != 0){
+            throw new IllegalArgumentException("Step must divide max edit distance");
+        }
         List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
-        List<Grid<Boolean>>[] brokenGrids = new List[editDistance + 1];
+        int actualDistance = editDistance/distanceStep;
+        List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
         List<Grid<Boolean>> tempGrids = new ArrayList<>();
         brokenGrids[0] = totalGrids[0];
         Random random = new Random();
-        for (int c = 1; c < editDistance + 1; c++) {
+        for (int c = 1; c < actualDistance + 1; c++) {
             tempGrids.clear();
-            tempGrids.addAll(totalGrids[c]);
+            tempGrids.addAll(totalGrids[distanceStep * c]);
             if (tempGrids.size() <= nSmpl) {
                 brokenGrids[c] = tempGrids.stream().toList();
             } else {
@@ -249,9 +257,9 @@ public class BreakDistMLP {
         Robot target;
         IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
         Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
-        List<Robot>[] solutions = new List[editDistance + 1];
-        List<Double>[] results = new List[editDistance + 1];
-        for (int i = 0; i < editDistance + 1; i++) {
+        List<Robot>[] solutions = new List[actualDistance + 1];
+        List<Double>[] results = new List[actualDistance + 1];
+        for (int i = 0; i < actualDistance + 1; i++) {
             solutions[i] = new ArrayList<>();
             for (Grid<Boolean> grid : brokenGrids[i]) {
                 target = new Robot(
@@ -277,7 +285,7 @@ public class BreakDistMLP {
         }
         if (!Objects.isNull(saveFile)) {
             String placeholder = "";
-            for (int i = 0; i < editDistance + 1; i++) {
+            for (int i = 0; i < actualDistance + 1; i++) {
                 placeholder += String.join(",", solutions[i].stream().map(SerializationUtils::serialize).toList()) + "\n";
             }
             try {
@@ -286,7 +294,7 @@ public class BreakDistMLP {
                 e.printStackTrace();
             }
         }
-        for (int i = 0; i < editDistance + 1; i++) {
+        for (int i = 0; i < actualDistance + 1; i++) {
             results[i] = solutions[i].stream().map(r -> task.apply(r).getDistance()).toList();
         }
         return results;
