@@ -35,7 +35,8 @@ public class BreakDistMLP {
     private final Function<Robot, Outcome> task;
     private final double step;
 
-    public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType, int signals, double episodeT, String terrainName, boolean diversity, double step) {
+    public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType, int signals,
+                        double episodeT, String terrainName, boolean diversity, double step) {
         this.baseBody = baseBody;
         this.sensorsType = sensorsType;
         this.signals = signals;
@@ -56,7 +57,8 @@ public class BreakDistMLP {
 
     public void display(Controller controller) {
         Locomotion locomotion = new Locomotion(episodeT, Locomotion.createTerrain(terrainName), new Settings());
-        GridOnlineViewer.run(locomotion, new Robot(controller, RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(baseBody)));
+        GridOnlineViewer.run(locomotion, new Robot(controller,
+                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(baseBody)));
     }
 
     public Robot buildHomoDistRobot(TimedRealFunction optFunction, Grid<Boolean> body) {
@@ -79,14 +81,19 @@ public class BreakDistMLP {
         );
         IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver =
                 new DoublesStandard(0.75, 0.05, 3, 0.35)
-                        .build(Map.ofEntries(Map.entry("nPop", String.valueOf(nPop)), Map.entry("nEval", String.valueOf(nEval)), Map.entry("diversity", String.valueOf(diversity))))
-                        .build(new BrainHomoStepDistributed().build(
-                                        Map.ofEntries(Map.entry("s", String.valueOf(signals)), Map.entry("step", String.valueOf(step))))
+                        .build(Map.ofEntries(
+                                Map.entry("nPop", String.valueOf(nPop)),
+                                Map.entry("nEval", String.valueOf(nEval)),
+                                Map.entry("diversity", String.valueOf(diversity))))
+                        .build(new BrainHomoStepDistributed().build(Map.ofEntries(
+                                                Map.entry("s", String.valueOf(signals)),
+                                        Map.entry("step", String.valueOf(step))))
                                 .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
         Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
         Collection<Robot> solutions = new ArrayList<>();
         try {
-            solutions = solver.solve(problem, new Random(), newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+            solutions = solver.solve(problem, new Random(),
+                    newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
         } catch (SolverException e) {
             System.out.printf("Couldn't solve due to %s%n", e);
         }
@@ -94,14 +101,18 @@ public class BreakDistMLP {
         return (DistributedSensing) a.getInnermostController();
     }
 
-    public List<Double>[] distanceRun(int editDistance, int distanceStep, int nPop, int nEval, int nSmpl, String saveFile) {
-        if (editDistance % distanceStep != 0){
+    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve,
+                                      int nPop, int nEval, int nSmpl, String saveFile) {
+        if (editDistance % distanceStep != 0) {
             throw new IllegalArgumentException("Step must divide max edit distance");
         }
         TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
                 .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
+
+        // DA SISTEMARE
+
         List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
-        int actualDistance = editDistance/distanceStep;
+        int actualDistance = editDistance / distanceStep;
         List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
         List<Grid<Boolean>> tempGrids = new ArrayList<>();
         brokenGrids[0] = totalGrids[0];
@@ -118,85 +129,55 @@ public class BreakDistMLP {
                 }
             }
         }
+
+        // FINO A QUI
+
         List<Double>[] results = new List[actualDistance + 1];
-        List<Callable<Double>> parallelEvaluation = new ArrayList<>();
+        List<Robot>[] solutions = new List[actualDistance + 1];
         List<Double> tempresults = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        results[0] = new ArrayList<>(List.of((task.apply(buildHomoDistRobot(optFunction, baseBody))
-                .getDistance())));
-        for (int i = 0; i < actualDistance; i++) {
-            parallelEvaluation.addAll(brokenGrids[i + 1].stream()
-                    .map(g -> (Callable<Double>) () -> task.apply(buildHomoDistRobot(optFunction, g))
-                            .getDistance()).toList());
-        }
-        try {
-            tempresults = new ArrayList<>(executor.invokeAll(parallelEvaluation)
-                    .stream()
-                    .map(f -> {
-                        try {
-                            return f.get();
-                        } catch (Exception e) {
-                            System.exit(10);
-                            return null;
-                        }
-                    })
-                    .toList());
-        } catch (Exception e) {
-            System.out.println("Something went wrong");
-            System.exit(2);
-        }
-        executor.shutdown();
-        int counter = 0;
-        for (int i = 0; i < actualDistance; i++) {
-            results[i + 1] = tempresults.subList(counter, counter + brokenGrids[i + 1].size());
-            counter += brokenGrids[i + 1].size();
-        }
-        if (!Objects.isNull(saveFile)) {
-            String placeholder = "";
-            for (int i = 0; i < actualDistance + 1; i++) {
-                placeholder += String.join(",", brokenGrids[i].stream()
-                        .map(g -> buildHomoDistRobot(optFunction, g))
-                        .map(SerializationUtils::serialize).toList()) + "\n";
-            }
-            try {
-                Analyzer.write(saveFile, placeholder);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return results;
-    }
-
-    public List<Double>[] distanceRunWithView(int editDistance, int nPop, int nEval, int nSmpl) {
-        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
-                .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
-        List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
-        List<Grid<Boolean>>[] brokenGrids = new List[editDistance + 1];
-        List<Grid<Boolean>> tempGrids = new ArrayList<>();
-        brokenGrids[0] = totalGrids[0];
-        Random random = new Random();
-        for (int c = 1; c < editDistance + 1; c++) {
-            tempGrids.clear();
-            tempGrids.addAll(totalGrids[c]);
-            if (tempGrids.size() <= nSmpl) {
-                brokenGrids[c] = tempGrids.stream().toList();
-            } else {
-                brokenGrids[c] = new ArrayList<>();
-                for (int a = 0; a < nSmpl; a++) {
-                    brokenGrids[c].add(tempGrids.remove(random.nextInt(tempGrids.size())));
+        solutions[0] = List.of(buildHomoDistRobot(optFunction));
+        results[0] = List.of((task.apply(solutions[0].get(0)).getDistance()));
+        List<Callable<Double>> parallelEvaluation = new ArrayList<>();
+        if (postEvolve) {
+            Robot target;
+            IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
+            Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
+            for (int i = 1; i < actualDistance + 1; i++) {
+                solutions[i] = new ArrayList<>();
+                for (Grid<Boolean> grid : brokenGrids[i]) {
+                    target = new Robot(
+                            Controller.empty(),
+                            RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
+                                    .apply(grid)
+                    );
+                    solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
+                            .build(Map.ofEntries(
+                                    Map.entry("nPop", String.valueOf(nPop)),
+                                    Map.entry("nEval", String.valueOf(nEval)),
+                                    Map.entry("diversity", String.valueOf(diversity))))
+                            .build(new BrainHomoStepDistributed().build(
+                                            Map.ofEntries(
+                                                    Map.entry("s", String.valueOf(signals)),
+                                                    Map.entry("step", String.valueOf(step))))
+                                    .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
+                    try {
+                        solutions[i].add(solver.solve(problem, new Random(),
+                                        newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
+                                .stream().toList().get(0));
+                    } catch (SolverException e) {
+                        System.out.printf("Couldn't solve due to %s%n", e);
+                    }
                 }
             }
+        } else {
+            for (int i = 1; i < actualDistance + 1; i++) {
+                solutions[i] = brokenGrids[i].stream().map(g -> buildHomoDistRobot(optFunction, g)).toList();
+            }
         }
-        List<Double>[] results = new List[editDistance + 1];
-        List<Callable<Double>> parallelEvaluation = new ArrayList<>();
-        List<Double> tempresults = new ArrayList<>();
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        results[0] = new ArrayList<>(List.of((task.apply(buildHomoDistRobot(optFunction, baseBody))
-                .getDistance())));
-        for (int i = 0; i < editDistance; i++) {
-            parallelEvaluation.addAll(brokenGrids[i + 1].stream()
-                    .map(g -> (Callable<Double>) () -> task.apply(buildHomoDistRobot(optFunction, g))
-                            .getDistance()).toList());
+        for (int i = 1; i < actualDistance + 1; i++) {
+            parallelEvaluation.addAll(solutions[i].stream()
+                    .map(r -> (Callable<Double>) () -> task.apply(r).getDistance()).toList());
         }
         try {
             tempresults = executor.invokeAll(parallelEvaluation)
@@ -215,87 +196,22 @@ public class BreakDistMLP {
             System.exit(2);
         }
         executor.shutdown();
-        Grid<Boolean>[] bestForGen = new Grid[editDistance + 1];
-        if (editDistance == 2) {
-            bestForGen = new Grid[editDistance + 2];
-            bestForGen[3] = baseBody;
-        }
-        bestForGen[0] = baseBody;
         int counter = 0;
-        for (int i = 0; i < editDistance; i++) {
+        for (int i = 0; i < actualDistance; i++) {
             results[i + 1] = tempresults.subList(counter, counter + brokenGrids[i + 1].size());
-            bestForGen[i + 1] = brokenGrids[i + 1].get(results[i + 1].indexOf(Collections.max(results[i + 1])));
             counter += brokenGrids[i + 1].size();
-        }
-        List<Robot> bestRobots = Arrays.stream(bestForGen).map(g -> buildHomoDistRobot(optFunction, g)).toList();
-        GridOnlineViewer.run(new Locomotion(episodeT, Locomotion.createTerrain(terrainName), new Settings()), bestRobots);
-        return results;
-    }
-
-    public List<Double>[] distanceEvolveRun(int editDistance, int distanceStep, int nPop, int nEval, int nSmpl, String saveFile) {
-        if (editDistance % distanceStep != 0){
-            throw new IllegalArgumentException("Step must divide max edit distance");
-        }
-        List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
-        int actualDistance = editDistance/distanceStep;
-        List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
-        List<Grid<Boolean>> tempGrids = new ArrayList<>();
-        brokenGrids[0] = totalGrids[0];
-        Random random = new Random();
-        for (int c = 1; c < actualDistance + 1; c++) {
-            tempGrids.clear();
-            tempGrids.addAll(totalGrids[distanceStep * c]);
-            if (tempGrids.size() <= nSmpl) {
-                brokenGrids[c] = tempGrids.stream().toList();
-            } else {
-                brokenGrids[c] = new ArrayList<>();
-                for (int a = 0; a < nSmpl; a++) {
-                    brokenGrids[c].add(tempGrids.remove(random.nextInt(tempGrids.size())));
-                }
-            }
-        }
-        Robot target;
-        IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
-        Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
-        List<Robot>[] solutions = new List[actualDistance + 1];
-        List<Double>[] results = new List[actualDistance + 1];
-        for (int i = 0; i < actualDistance + 1; i++) {
-            solutions[i] = new ArrayList<>();
-            for (Grid<Boolean> grid : brokenGrids[i]) {
-                target = new Robot(
-                        Controller.empty(),
-                        RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
-                                .apply(grid)
-                );
-                solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
-                        .build(Map.ofEntries(
-                                Map.entry("nPop", String.valueOf(nPop)),
-                                Map.entry("nEval", String.valueOf(nEval)),
-                                Map.entry("diversity", String.valueOf(diversity))))
-                        .build(new BrainHomoStepDistributed().build(
-                                        Map.ofEntries(Map.entry("s", String.valueOf(signals)), Map.entry("step", String.valueOf(step))))
-                                .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
-                try {
-                    solutions[i].add(solver.solve(problem, new Random(), newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
-                            .stream().toList().get(0));
-                } catch (SolverException e) {
-                    System.out.printf("Couldn't solve due to %s%n", e);
-                }
-            }
         }
         if (!Objects.isNull(saveFile)) {
             String placeholder = "";
             for (int i = 0; i < actualDistance + 1; i++) {
-                placeholder += String.join(",", solutions[i].stream().map(SerializationUtils::serialize).toList()) + "\n";
+                placeholder += String.join(",", solutions[i].stream()
+                        .map(SerializationUtils::serialize).toList()) + "\n";
             }
             try {
                 Analyzer.write(saveFile, placeholder);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        for (int i = 0; i < actualDistance + 1; i++) {
-            results[i] = solutions[i].stream().map(r -> task.apply(r).getDistance()).toList();
         }
         return results;
     }
