@@ -33,8 +33,7 @@ public class Analyzer {
     }
 
     public static List<Robot>[] deserializeRobots(String path) throws IOException {
-        FileReader fileReader = new FileReader(path);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
         String line = bufferedReader.readLine();
         List<List<Robot>> templines = new ArrayList<>();
         while (line != null) {
@@ -42,6 +41,21 @@ public class Analyzer {
             line = bufferedReader.readLine();
         }
         List<Robot>[] lines = new List[templines.size()];
+        for (int i = 0; i < lines.length; i++) {
+            lines[i] = templines.get(i).stream().toList();
+        }
+        return lines;
+    }
+
+    public static List<Double>[] importResults(String path) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
+        String line = bufferedReader.readLine();
+        List<List<Double>> templines = new ArrayList<>();
+        while (line != null) {
+            templines.add(Arrays.stream(line.split(",")).map(Double::parseDouble).toList());
+            line = bufferedReader.readLine();
+        }
+        List<Double>[] lines = new List[templines.size()];
         for (int i = 0; i < lines.length; i++) {
             lines[i] = templines.get(i).stream().toList();
         }

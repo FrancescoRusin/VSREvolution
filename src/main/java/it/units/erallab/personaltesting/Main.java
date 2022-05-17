@@ -12,7 +12,7 @@ public class Main {
                 && Math.abs(x - 5.5) < 4 && y < 6), "t+a+vxy");
         bodies[1] = new BreakDistMLP(Grid.create(18, 6, (x, y) -> (y == 2 || y == 3 || x % 4 == 3 || x % 4 == 2)
                 && Math.abs(x - 8.5) < 7 && y < 4), "t+a+vxy");
-        bodies[2] = new BreakDistMLP(Grid.create(14, 6, (x, y) -> Math.abs(x - 6.5) < 5 && y < 2), "t+a+vxy");
+        bodies[2] = new BreakDistMLP(Grid.create(14, 6, (x, y) -> Math.abs(x - 6.5) < 5 && y < 4), "t+a+vxy");
         String[] names = new String[]{"biped", "comb", "worm"};
         String distanceRunsString;
         String temp;
