@@ -17,14 +17,14 @@ public class BreakGrid {
         return null;
     }
 
-    protected enum Dir{
-        N(0,1), E(1,0), S(0,-1), W(-1,0);
+    protected enum Dir {
+        N(0, 1), E(1, 0), S(0, -1), W(-1, 0);
         final int dx;
         final int dy;
 
-        Dir(int dx, int dy){
-            this.dx=dx;
-            this.dy=dy;
+        Dir(int dx, int dy) {
+            this.dx = dx;
+            this.dy = dy;
         }
     }
 
@@ -32,21 +32,21 @@ public class BreakGrid {
         int counter = 0;
         final int w = grid.getW();
         final int h = grid.getH();
-        while (!grid.get(counter % w, (int) Math.floor(counter / w)) && counter < w * h) {
+        while (!grid.get(counter % w, counter / w) && counter < w * h) {
             counter += 1;
         }
         if (counter == w * h) {
             return false;
         }
         final int basedCounter = counter;
-        Grid<Boolean> scan = Grid.create(w, h, (x, y) -> x == basedCounter % w && y == (int) Math.floor(basedCounter / w));
+        Grid<Boolean> scan = Grid.create(w, h, (x, y) -> x == basedCounter % w && y == basedCounter / w);
         List<int[]> nextInLine = new ArrayList<>();
-        nextInLine.add(new int[]{counter % w, (int) Math.floor(counter / w)});
+        nextInLine.add(new int[]{counter % w, counter / w});
         int[] next;
         while (!nextInLine.isEmpty()) {
             next = nextInLine.remove(0);
             for (Dir dir : Dir.values()) {
-                if(!Objects.isNull(grid.get(next[0] + dir.dx, next[1] + dir.dy))) {
+                if (!Objects.isNull(grid.get(next[0] + dir.dx, next[1] + dir.dy))) {
                     if (grid.get(next[0] + dir.dx, next[1] + dir.dy) && !scan.get(next[0] + dir.dx, next[1] + dir.dy)) {
                         scan.set(next[0] + dir.dx, next[1] + dir.dy, true);
                         nextInLine.add(new int[]{next[0] + dir.dx, next[1] + dir.dy});
@@ -54,9 +54,9 @@ public class BreakGrid {
                 }
             }
         }
-        for(counter=0;counter<w*h;counter++){
-            if((!grid.get(counter % w, (int) Math.floor(counter / w)) && scan.get(counter % w, (int) Math.floor(counter / w))) ||
-                    (grid.get(counter % w, (int) Math.floor(counter / w)) && !scan.get(counter % w, (int) Math.floor(counter / w)))){
+        for (counter = 0; counter < w * h; counter++) {
+            if ((!grid.get(counter % w, counter / w) && scan.get(counter % w, counter / w)) ||
+                    (grid.get(counter % w, counter / w) && !scan.get(counter % w, counter / w))) {
                 return false;
             }
         }
@@ -66,71 +66,17 @@ public class BreakGrid {
 
     public static Grid<Boolean> getPossibilities(Grid<Boolean> grid) {
         Grid<Boolean> possibilities = Grid.create(grid.getW(), grid.getH());
-        for (int w = 1; w < grid.getW() - 1; w++) {
-            for (int h = 1; h < grid.getH() - 1; h++) {
-                possibilities.set(w, h, Boolean.FALSE);
-                if (grid.get(w, h)
-                        || grid.get(w - 1, h)
-                        || grid.get(w, h - 1)
-                        || grid.get(w + 1, h)
-                        || grid.get(w, h + 1)) {
-                    possibilities.set(w, h, Boolean.TRUE);
+        for (int i = 0; i < grid.getW(); i++) {
+            for (int j = 0; j < grid.getH(); j++) {
+                possibilities.set(i, j, false);
+                for (Dir dir : Dir.values()) {
+                    if (!Objects.isNull(grid.get(i + dir.dx, j + dir.dy))) {
+                        if (grid.get(i + dir.dx, j + dir.dy)) {
+                            grid.set(i, j, true);
+                        }
+                    }
                 }
             }
-            possibilities.set(w, 0, Boolean.FALSE);
-            if (grid.get(w, 0)
-                    || grid.get(w - 1, 0)
-                    || grid.get(w + 1, 0)
-                    || grid.get(w, 1)) {
-                possibilities.set(w, 0, Boolean.TRUE);
-            }
-            possibilities.set(w, grid.getH() - 1, Boolean.FALSE);
-            if (grid.get(w, grid.getH() - 1)
-                    || grid.get(w - 1, grid.getH() - 1)
-                    || grid.get(w + 1, grid.getH() - 1)
-                    || grid.get(w, grid.getH() - 2)) {
-                possibilities.set(w, grid.getH() - 1, Boolean.TRUE);
-            }
-        }
-        for (int h = 1; h < grid.getH() - 1; h++) {
-            possibilities.set(0, h, Boolean.FALSE);
-            if (grid.get(0, h)
-                    || grid.get(0, h - 1)
-                    || grid.get(1, h)
-                    || grid.get(0, h + 1)) {
-                possibilities.set(0, h, Boolean.TRUE);
-            }
-            possibilities.set(grid.getW() - 1, h, Boolean.FALSE);
-            if (grid.get(grid.getW() - 1, h)
-                    || grid.get(grid.getW() - 1, h - 1)
-                    || grid.get(grid.getW() - 2, h)
-                    || grid.get(grid.getW() - 1, h + 1)) {
-                possibilities.set(grid.getW() - 1, h, Boolean.TRUE);
-            }
-        }
-        possibilities.set(0, 0, Boolean.FALSE);
-        if (grid.get(0, 0)
-                || grid.get(1, 0)
-                || grid.get(0, 1)) {
-            possibilities.set(0, 0, Boolean.TRUE);
-        }
-        possibilities.set(0, grid.getH() - 1, Boolean.FALSE);
-        if (grid.get(0, grid.getH() - 1)
-                || grid.get(1, grid.getH() - 1)
-                || grid.get(0, grid.getH() - 2)) {
-            possibilities.set(0, grid.getH() - 1, Boolean.TRUE);
-        }
-        possibilities.set(grid.getW() - 1, 0, Boolean.FALSE);
-        if (grid.get(grid.getW() - 1, 0)
-                || grid.get(grid.getW() - 2, 0)
-                || grid.get(grid.getW() - 1, 1)) {
-            possibilities.set(grid.getW() - 1, 0, Boolean.TRUE);
-        }
-        possibilities.set(grid.getW() - 1, grid.getH() - 1, Boolean.FALSE);
-        if (grid.get(grid.getW() - 1, grid.getH() - 1)
-                || grid.get(grid.getW() - 2, grid.getH() - 1)
-                || grid.get(grid.getW() - 1, grid.getH() - 2)) {
-            possibilities.set(grid.getW() - 1, grid.getH() - 1, Boolean.TRUE);
         }
         return possibilities;
     }
@@ -170,10 +116,75 @@ public class BreakGrid {
             temporaryPossibilities.clear();
             throwaway.clear();
         }
-        List<Grid<Boolean>>[] listPossibilities = new List[maxEditDistance+1];
-        for(int i=0; i<maxEditDistance+1;i++){
-            listPossibilities[i]=totalPossibilities[i].stream().filter(BreakGrid::isConnected).toList();
+        List<Grid<Boolean>>[] listPossibilities = new List[maxEditDistance + 1];
+        for (int i = 0; i < maxEditDistance + 1; i++) {
+            listPossibilities[i] = totalPossibilities[i].stream().filter(BreakGrid::isConnected).toList();
         }
         return listPossibilities;
+    }
+
+    public static int toSingleInt(int[] cs, Grid grid) {
+        if (cs[0] < 0 || cs[1] < 0 || cs[0] >= grid.getW() || cs[1] >= grid.getH()) {
+            throw new IndexOutOfBoundsException(
+                    "Can't get index (" + cs[0] + "," + cs[1] + ") in " + grid.getW() + "x" + grid.getH() + " grid");
+        }
+        return cs[0] * grid.getW() + cs[1];
+    }
+
+    public static int toSingleInt(int cs1, int cs2, Grid grid) {
+        return toSingleInt(new int[]{cs1, cs2}, grid);
+    }
+
+    public static int[] toDoubleInts(int cs, Grid grid) {
+        if (cs < 0 || cs > grid.getW() * grid.getH()) {
+            throw new IndexOutOfBoundsException(
+                    "Can't get index " + cs + " in " + grid.getW() + "x" + grid.getH() + " grid");
+        }
+        return new int[]{cs / grid.getW(), cs % grid.getW()};
+    }
+
+    public static List<Grid<Boolean>> crushAndGet(Grid<Boolean> grid, int editDistance, int samples) {
+        Set<List<Integer>> possibilities;
+        Set<List<Integer>> chosenOnes;
+        Set<Set<List<Integer>>> results = new HashSet<>();
+        Random random = new Random();
+        List<Integer> holder;
+        int iterations = 0;
+        while (results.size() < samples && iterations < 1e6) {
+            possibilities = new HashSet<>();
+            chosenOnes = new HashSet<>();
+            for (int i = 0; i < grid.getW(); i++) {
+                for (int j = 0; j < grid.getH(); j++) {
+                    possibilities.add(List.of(i, j));
+                    for (Dir dir : Dir.values()) {
+                        if (!Objects.isNull(grid.get(i + dir.dx, j + dir.dy))) {
+                            possibilities.add(List.of(i + dir.dx, j + dir.dy));
+                        }
+                    }
+                }
+            }
+            for (int counter = 0; counter < editDistance; counter++) {
+                holder = possibilities.stream().toList().get(random.nextInt(possibilities.size()));
+                chosenOnes.add(holder);
+                possibilities.remove(holder);
+                for (Dir dir : Dir.values()) {
+                    if (!(Objects.isNull(grid.get(holder.get(0), holder.get(1))))) {
+                        if (!chosenOnes.contains(List.of(holder.get(0) + dir.dx, holder.get(1) + dir.dy))) {
+                            possibilities.add(List.of(holder.get(0) + dir.dx, holder.get(1) + dir.dy));
+                        }
+                    }
+                }
+            }
+            Set<List<Integer>> tempCopy = chosenOnes;
+            if (isConnected(Grid.create(grid.getW(), grid.getH(),
+                    (x, y) -> tempCopy.contains(List.of(x, y)) != grid.get(x, y)))) {
+                results.add(chosenOnes);
+            }
+            iterations += 1;
+        }
+        return results.stream()
+                .map(res -> Grid.create(grid.getW(), grid.getH(),
+                        (x, y) -> res.contains(List.of(x, y)) != grid.get(x, y)))
+                .toList();
     }
 }

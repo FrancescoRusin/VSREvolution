@@ -17,8 +17,6 @@ import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
 import org.dyn4j.dynamics.Settings;
-
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -47,18 +45,12 @@ public class BreakDistMLP {
         this.step = step;
     }
 
+    public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType) {
+        this(baseBody, sensorsType, 1, 30d, "flat", false, 0.2);
+    }
+
     public Grid<Boolean> getBaseBody() {
         return this.baseBody;
-    }
-
-    public BreakDistMLP(Grid<Boolean> baseBody, String sensorsType) {
-        this(baseBody, sensorsType, 1, 30d, "flat", false, 0.5);
-    }
-
-    public void display(Controller controller) {
-        Locomotion locomotion = new Locomotion(episodeT, Locomotion.createTerrain(terrainName), new Settings());
-        GridOnlineViewer.run(locomotion, new Robot(controller,
-                RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0").apply(baseBody)));
     }
 
     public Robot buildHomoDistRobot(TimedRealFunction optFunction, Grid<Boolean> body) {
@@ -86,7 +78,7 @@ public class BreakDistMLP {
                                 Map.entry("nEval", String.valueOf(nEval)),
                                 Map.entry("diversity", String.valueOf(diversity))))
                         .build(new BrainHomoStepDistributed().build(Map.ofEntries(
-                                                Map.entry("s", String.valueOf(signals)),
+                                        Map.entry("s", String.valueOf(signals)),
                                         Map.entry("step", String.valueOf(step))))
                                 .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
         Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
@@ -108,30 +100,12 @@ public class BreakDistMLP {
         }
         TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
                 .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
-
-        // DA SISTEMARE
-
-        List<Grid<Boolean>>[] totalGrids = BreakGrid.crush(baseBody, editDistance);
         int actualDistance = editDistance / distanceStep;
         List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
-        List<Grid<Boolean>> tempGrids = new ArrayList<>();
-        brokenGrids[0] = totalGrids[0];
-        Random random = new Random();
+        brokenGrids[0] = List.of(baseBody);
         for (int c = 1; c < actualDistance + 1; c++) {
-            tempGrids.clear();
-            tempGrids.addAll(totalGrids[distanceStep * c]);
-            if (tempGrids.size() <= nSmpl) {
-                brokenGrids[c] = tempGrids.stream().toList();
-            } else {
-                brokenGrids[c] = new ArrayList<>();
-                for (int a = 0; a < nSmpl; a++) {
-                    brokenGrids[c].add(tempGrids.remove(random.nextInt(tempGrids.size())));
-                }
-            }
+            brokenGrids[c] = BreakGrid.crushAndGet(baseBody, c * distanceStep, nSmpl);
         }
-
-        // FINO A QUI
-
         List<Double>[] results = new List[actualDistance + 1];
         List<Robot>[] solutions = new List[actualDistance + 1];
         List<Double> tempresults = new ArrayList<>();
@@ -197,9 +171,9 @@ public class BreakDistMLP {
         }
         executor.shutdown();
         int counter = 0;
-        for (int i = 0; i < actualDistance; i++) {
-            results[i + 1] = tempresults.subList(counter, counter + brokenGrids[i + 1].size());
-            counter += brokenGrids[i + 1].size();
+        for (int i = 1; i < actualDistance + 1; i++) {
+            results[i] = tempresults.subList(counter, counter + brokenGrids[i].size());
+            counter += brokenGrids[i].size();
         }
         if (!Objects.isNull(saveFile)) {
             String placeholder = "";
@@ -214,5 +188,13 @@ public class BreakDistMLP {
             }
         }
         return results;
+    }
+
+    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve, String saveFile) {
+        return distanceRun(editDistance, distanceStep, postEvolve, 100, 10000, 10, saveFile);
+    }
+
+    public List<Double>[] distanceRun(int editDistance, boolean postEvolve, int nSmpl, String saveFile) {
+        return distanceRun(editDistance, 1, postEvolve, 100, 10000, nSmpl, saveFile);
     }
 }

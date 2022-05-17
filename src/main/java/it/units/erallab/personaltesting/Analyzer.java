@@ -58,4 +58,13 @@ public class Analyzer {
         writer.write(string);
         writer.close();
     }
+
+    public static void printGrid(Grid<Boolean> grid){
+        for(int j=grid.getH()-1; j>-1;j--){
+            for(int i = 0; i< grid.getW();i++){
+                System.out.print(grid.get(i,j) ? " O " : " - ");
+            }
+            System.out.println();
+        }
+    }
 }
