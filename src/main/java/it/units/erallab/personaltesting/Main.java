@@ -37,16 +37,5 @@ public class Main {
             }
         }
         System.exit(0);
-        /*try {
-            List<Robot>[] attempts = Analyzer.deserializeRobots("C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\big_robots_worm_1.csv");
-            List<Robot> show = new ArrayList<>();
-            show.add(attempts[0].get(0));
-            for(int i = 1; i< attempts.length;i++){
-                show.add(attempts[i].get(1));
-            }
-            GridOnlineViewer.run(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), show);
-        } catch(Exception e){
-            System.out.println(e);
-        }*/
     }
 }
