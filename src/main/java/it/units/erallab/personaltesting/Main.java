@@ -18,7 +18,7 @@ public class Main {
         String temp;
         for (int counter = 1; counter < 11; counter++) {
             for (int name = 0; name < 3; name++) {
-                List<Double>[] distanceRuns = bodies[name].distanceRun(6, 2, false,
+                List<Double>[] distanceRuns = bodies[name].distanceRun(6, 2, true,
                         "big_robots_" + names[name] + "_" + counter + ".csv");
                 distanceRunsString = new String();
                 for (List<Double> distanceRun : distanceRuns) {
@@ -30,7 +30,7 @@ public class Main {
                     distanceRunsString += temp + "\n";
                 }
                 try {
-                    Analyzer.write(names[name] + "_big_preevolve_" + counter + ".csv", distanceRunsString);
+                    Analyzer.write(names[name] + "_big_postevolve_" + counter + ".csv", distanceRunsString);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
