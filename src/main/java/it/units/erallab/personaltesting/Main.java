@@ -20,7 +20,7 @@ public class Main {
             for (int name = 0; name < 3; name++) {
                 List<Double>[] distanceRuns = bodies[name].distanceRun(6, 2, true,
                         "big_robots_" + names[name] + "_" + counter + ".csv");
-                distanceRunsString = new String();
+                distanceRunsString = "";
                 for (List<Double> distanceRun : distanceRuns) {
                     temp = "";
                     for (Double s : distanceRun) {

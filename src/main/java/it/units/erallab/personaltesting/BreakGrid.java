@@ -81,7 +81,11 @@ public class BreakGrid {
         return possibilities;
     }
 
-    public static List<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int maxEditDistance) {
+    public static List<Grid<Boolean>>[] crush(Grid<Boolean> baseline, int maxEditDistance)
+            throws IllegalArgumentException {
+        if (maxEditDistance < 0) {
+            throw new IllegalArgumentException("Max edit distance must be non-negative");
+        }
         Set<Grid<Boolean>>[] totalPossibilities = new Set[maxEditDistance + 1];
         totalPossibilities[0] = Set.of(Grid.copy(baseline));
         Set<Grid<Boolean>> temporaryPossibilities = new HashSet();
@@ -123,27 +127,13 @@ public class BreakGrid {
         return listPossibilities;
     }
 
-    public static int toSingleInt(int[] cs, Grid grid) {
-        if (cs[0] < 0 || cs[1] < 0 || cs[0] >= grid.getW() || cs[1] >= grid.getH()) {
-            throw new IndexOutOfBoundsException(
-                    "Can't get index (" + cs[0] + "," + cs[1] + ") in " + grid.getW() + "x" + grid.getH() + " grid");
+    public static List<Grid<Boolean>> crushAndGet(Grid<Boolean> grid, int maxEditDistance, int samples)
+            throws IllegalArgumentException {
+        if (maxEditDistance < 0) {
+            throw new IllegalArgumentException("Max edit distance must be non-negative");
+        } else if (samples < 0) {
+            throw new IllegalArgumentException("Number of samples must be non-negative");
         }
-        return cs[0] * grid.getW() + cs[1];
-    }
-
-    public static int toSingleInt(int cs1, int cs2, Grid grid) {
-        return toSingleInt(new int[]{cs1, cs2}, grid);
-    }
-
-    public static int[] toDoubleInts(int cs, Grid grid) {
-        if (cs < 0 || cs > grid.getW() * grid.getH()) {
-            throw new IndexOutOfBoundsException(
-                    "Can't get index " + cs + " in " + grid.getW() + "x" + grid.getH() + " grid");
-        }
-        return new int[]{cs / grid.getW(), cs % grid.getW()};
-    }
-
-    public static List<Grid<Boolean>> crushAndGet(Grid<Boolean> grid, int editDistance, int samples) {
         Set<List<Integer>> possibilities;
         Set<List<Integer>> chosenOnes;
         Set<Set<List<Integer>>> results = new HashSet<>();
@@ -163,7 +153,7 @@ public class BreakGrid {
                     }
                 }
             }
-            for (int counter = 0; counter < editDistance; counter++) {
+            for (int counter = 0; counter < maxEditDistance; counter++) {
                 holder = possibilities.stream().toList().get(random.nextInt(possibilities.size()));
                 chosenOnes.add(holder);
                 possibilities.remove(holder);

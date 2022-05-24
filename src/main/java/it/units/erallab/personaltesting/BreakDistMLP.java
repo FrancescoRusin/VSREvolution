@@ -5,18 +5,15 @@ import it.units.erallab.builder.robot.BrainHomoStepDistributed;
 import it.units.erallab.builder.solver.DoublesStandard;
 import it.units.erallab.hmsrobots.core.controllers.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
-import it.units.erallab.hmsrobots.tasks.locomotion.Locomotion;
 import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
 import it.units.erallab.hmsrobots.util.Grid;
 import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
-import it.units.erallab.hmsrobots.viewers.GridOnlineViewer;
 import it.units.erallab.locomotion.Starter;
 import it.units.malelab.jgea.core.TotalOrderQualityBasedProblem;
 import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
-import org.dyn4j.dynamics.Settings;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -27,8 +24,6 @@ public class BreakDistMLP {
     private final Grid<Boolean> baseBody;
     private final String sensorsType;
     private final int signals;
-    private final double episodeT;
-    private final String terrainName;
     private final boolean diversity;
     private final Function<Robot, Outcome> task;
     private final double step;
@@ -38,8 +33,6 @@ public class BreakDistMLP {
         this.baseBody = baseBody;
         this.sensorsType = sensorsType;
         this.signals = signals;
-        this.episodeT = episodeT;
-        this.terrainName = terrainName;
         this.diversity = diversity;
         this.task = Starter.buildLocomotionTask(terrainName, episodeT, new Random(), false);
         this.step = step;
@@ -94,7 +87,7 @@ public class BreakDistMLP {
     }
 
     public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve,
-                                      int nPop, int nEval, int nSmpl, String saveFile) {
+                                      int nPop, int nEval, int nSmpl, String saveFile) throws IllegalArgumentException {
         if (editDistance % distanceStep != 0) {
             throw new IllegalArgumentException("Step must divide max edit distance");
         }
@@ -190,11 +183,13 @@ public class BreakDistMLP {
         return results;
     }
 
-    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve, String saveFile) {
+    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve, String saveFile)
+            throws IllegalArgumentException {
         return distanceRun(editDistance, distanceStep, postEvolve, 100, 10000, 10, saveFile);
     }
 
-    public List<Double>[] distanceRun(int editDistance, boolean postEvolve, int nSmpl, String saveFile) {
+    public List<Double>[] distanceRun(int editDistance, boolean postEvolve, int nSmpl, String saveFile)
+            throws IllegalArgumentException {
         return distanceRun(editDistance, 1, postEvolve, 100, 10000, nSmpl, saveFile);
     }
 }
