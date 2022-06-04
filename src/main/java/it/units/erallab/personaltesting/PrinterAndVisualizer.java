@@ -13,7 +13,7 @@ public class PrinterAndVisualizer {
     public static void main(String[] args) {
         try {
             String name = "biped";
-            int number = 9;
+            int number = 10;
             List<Robot>[] robots = Analyzer.deserializeRobots(
                     "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big postevolve\\big_robots_" + name + "_" + number + ".csv");
             List<Double>[] results = Analyzer.importResults(

@@ -3,6 +3,7 @@ package it.units.erallab.personaltesting;
 import it.units.erallab.builder.function.MLP;
 import it.units.erallab.builder.robot.BrainHomoStepDistributed;
 import it.units.erallab.builder.solver.DoublesStandard;
+import it.units.erallab.builder.solver.SolverBuilder;
 import it.units.erallab.hmsrobots.core.controllers.*;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
@@ -109,6 +110,11 @@ public class BreakDistMLP {
         if (postEvolve) {
             Robot target;
             IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
+            SolverBuilder<List<Double>> builder = new DoublesStandard(0.75, 0.05, 3, 0.35)
+                    .build(Map.ofEntries(
+                            Map.entry("nPop", String.valueOf(nPop)),
+                            Map.entry("nEval", String.valueOf(nEval)),
+                            Map.entry("diversity", String.valueOf(diversity))));
             Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
             for (int i = 1; i < actualDistance + 1; i++) {
                 solutions[i] = new ArrayList<>();
@@ -118,19 +124,13 @@ public class BreakDistMLP {
                             RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
                                     .apply(grid)
                     );
-                    solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
-                            .build(Map.ofEntries(
-                                    Map.entry("nPop", String.valueOf(nPop)),
-                                    Map.entry("nEval", String.valueOf(nEval)),
-                                    Map.entry("diversity", String.valueOf(diversity))))
-                            .build(new BrainHomoStepDistributed().build(
+                    solver = builder.build(new BrainHomoStepDistributed().build(
                                             Map.ofEntries(
                                                     Map.entry("s", String.valueOf(signals)),
                                                     Map.entry("step", String.valueOf(step))))
                                     .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
                     try {
-                        solutions[i].add(solver.solve(problem, new Random(),
-                                        newFixedThreadPool(Runtime.getRuntime().availableProcessors()))
+                        solutions[i].add(solver.solve(problem, new Random(), executor)
                                 .stream().toList().get(0));
                     } catch (SolverException e) {
                         System.out.printf("Couldn't solve due to %s%n", e);
