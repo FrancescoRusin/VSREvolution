@@ -12,13 +12,20 @@ import it.units.erallab.hmsrobots.util.RobotUtils;
 import it.units.erallab.hmsrobots.util.SerializationUtils;
 import it.units.erallab.locomotion.Starter;
 import it.units.malelab.jgea.core.TotalOrderQualityBasedProblem;
+import it.units.malelab.jgea.core.listener.CSVPrinter;
+import it.units.malelab.jgea.core.listener.Listener;
 import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
+import it.units.malelab.jgea.core.util.Misc;
+
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
+import static it.units.erallab.locomotion.NamedFunctions.*;
+import static it.units.malelab.jgea.core.listener.NamedFunctions.fitness;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class BreakDistMLP {
@@ -77,12 +84,13 @@ public class BreakDistMLP {
                                 .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
         Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
         Collection<Robot> solutions = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
-            solutions = solver.solve(problem, new Random(),
-                    newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+            solutions = solver.solve(problem, new Random(),executor);
         } catch (SolverException e) {
             System.out.printf("Couldn't solve due to %s%n", e);
         }
+        executor.shutdown();
         StepController a = (StepController) solutions.stream().map(Robot::getController).toList().get(0);
         return (DistributedSensing) a.getInnermostController();
     }
@@ -107,6 +115,24 @@ public class BreakDistMLP {
         solutions[0] = List.of(buildHomoDistRobot(optFunction));
         results[0] = List.of((task.apply(solutions[0].get(0)).getDistance()));
         List<Callable<Double>> parallelEvaluation = new ArrayList<>();
+
+
+        Listener<? super POSetPopulationState<?, Robot, Outcome>> listener = new CSVPrinter<>(Misc.concat(List.of(
+                basicFunctions,
+                populationFunctions,
+                best().then(basicIndividualFunctions),
+                basicOutcomeFunctions.stream().map(f -> f.of(fitness()).of(best())).toList(),
+                detailedOutcomeFunctions.stream().map(f -> f.of(fitness()).of(best())).toList(),
+                best().then(serializationFunction(serializationFlags.contains("last")))
+        )), keysFunctions(), new File(bestFileName)).build();
+
+
+
+
+
+
+
+
         if (postEvolve) {
             Robot target;
             IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
