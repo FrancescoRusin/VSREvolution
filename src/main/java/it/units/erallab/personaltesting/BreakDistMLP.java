@@ -25,8 +25,8 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 
 import static it.units.erallab.locomotion.NamedFunctions.*;
+import static it.units.malelab.jgea.core.listener.NamedFunctions.f;
 import static it.units.malelab.jgea.core.listener.NamedFunctions.fitness;
-import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class BreakDistMLP {
     private final Grid<Boolean> baseBody;
@@ -66,7 +66,7 @@ public class BreakDistMLP {
         return buildHomoDistRobot(optFunction, this.baseBody);
     }
 
-    public DistributedSensing solve(int nPop, int nEval) {
+    public DistributedSensing solve(int nPop, int nEval, Listener<? super POSetPopulationState<?, Robot, Outcome>> listener) {
         Robot target = new Robot(
                 Controller.empty(),
                 RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
@@ -86,7 +86,7 @@ public class BreakDistMLP {
         Collection<Robot> solutions = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
-            solutions = solver.solve(problem, new Random(),executor);
+            solutions = solver.solve(problem, new Random(),executor, listener);
         } catch (SolverException e) {
             System.out.printf("Couldn't solve due to %s%n", e);
         }
@@ -95,12 +95,26 @@ public class BreakDistMLP {
         return (DistributedSensing) a.getInnermostController();
     }
 
+    public DistributedSensing solve(int nPop, int nEval){
+        return solve(nPop, nEval, Listener.deaf());
+    }
+
+    public Listener<? super POSetPopulationState<?, Robot, Outcome>> buildBasicListener(String fileName, boolean serialize){
+        return Objects.isNull(fileName) ? Listener.deaf() : new CSVPrinter<>(Misc.concat(List.of(
+                List.of(f("distance", "%5.1f", Outcome::getDistance).of(fitness()).of(best())),
+                best().then(serializationFunction(serialize))
+        )), List.of(), new File(fileName)).build(Map.of());
+    }
+
     public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve,
-                                      int nPop, int nEval, int nSmpl, String saveFile) throws IllegalArgumentException {
+                                      int nPop, int nEval, int nSmpl, String saveFile,
+                                      String listenerFile, boolean serializeMeds)
+            throws IllegalArgumentException,NullPointerException {
         if (editDistance % distanceStep != 0) {
             throw new IllegalArgumentException("Step must divide max edit distance");
         }
-        TimedRealFunction optFunction = solve(nPop, nEval).getFunctions()
+        TimedRealFunction optFunction = solve(nPop, nEval,
+                buildBasicListener(listenerFile+"_base.csv", serializeMeds)).getFunctions()
                 .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
         int actualDistance = editDistance / distanceStep;
         List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
@@ -115,24 +129,6 @@ public class BreakDistMLP {
         solutions[0] = List.of(buildHomoDistRobot(optFunction));
         results[0] = List.of((task.apply(solutions[0].get(0)).getDistance()));
         List<Callable<Double>> parallelEvaluation = new ArrayList<>();
-
-
-        Listener<? super POSetPopulationState<?, Robot, Outcome>> listener = new CSVPrinter<>(Misc.concat(List.of(
-                basicFunctions,
-                populationFunctions,
-                best().then(basicIndividualFunctions),
-                basicOutcomeFunctions.stream().map(f -> f.of(fitness()).of(best())).toList(),
-                detailedOutcomeFunctions.stream().map(f -> f.of(fitness()).of(best())).toList(),
-                best().then(serializationFunction(serializationFlags.contains("last")))
-        )), keysFunctions(), new File(bestFileName)).build();
-
-
-
-
-
-
-
-
         if (postEvolve) {
             Robot target;
             IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
@@ -142,9 +138,12 @@ public class BreakDistMLP {
                             Map.entry("nEval", String.valueOf(nEval)),
                             Map.entry("diversity", String.valueOf(diversity))));
             Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
+            int number;
             for (int i = 1; i < actualDistance + 1; i++) {
                 solutions[i] = new ArrayList<>();
+                number = 0;
                 for (Grid<Boolean> grid : brokenGrids[i]) {
+                    number += 1;
                     target = new Robot(
                             Controller.empty(),
                             RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
@@ -156,7 +155,10 @@ public class BreakDistMLP {
                                                     Map.entry("step", String.valueOf(step))))
                                     .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
                     try {
-                        solutions[i].add(solver.solve(problem, new Random(), executor)
+                        solutions[i].add(solver.solve(problem, new Random(), executor,
+                                        buildBasicListener(
+                                                Objects.isNull(listenerFile) ? null : listenerFile+"_"+i+"-"+number+".csv",
+                                                serializeMeds))
                                 .stream().toList().get(0));
                     } catch (SolverException e) {
                         System.out.printf("Couldn't solve due to %s%n", e);
@@ -209,6 +211,11 @@ public class BreakDistMLP {
         return results;
     }
 
+    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve, int nPop, int nEval,
+                                      int nSmpl, String saveFile){
+        return distanceRun(editDistance, distanceStep, postEvolve, nPop, nEval, nSmpl, saveFile, null, false);
+    }
+
     public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve, String saveFile)
             throws IllegalArgumentException {
         return distanceRun(editDistance, distanceStep, postEvolve, 100, 10000, 10, saveFile);
@@ -217,5 +224,19 @@ public class BreakDistMLP {
     public List<Double>[] distanceRun(int editDistance, boolean postEvolve, int nSmpl, String saveFile)
             throws IllegalArgumentException {
         return distanceRun(editDistance, 1, postEvolve, 100, 10000, nSmpl, saveFile);
+    }
+
+    public List<Double>[] distanceRun(int editDistance, boolean postEvolve,
+                                      int nPop, int nEval, int nSmpl, String saveFile,
+                                      String listenerFile, boolean serializeMeds)
+            throws IllegalArgumentException,NullPointerException {
+        return distanceRun(editDistance, 1, postEvolve, nPop, nEval, nSmpl, saveFile,
+                listenerFile, serializeMeds);
+    }
+
+    public List<Double>[] distanceRun(int editDistance, boolean postEvolve,
+                                      int nPop, int nEval, int nSmpl, String saveFile)
+            throws IllegalArgumentException,NullPointerException {
+        return distanceRun(editDistance, 1, postEvolve, nPop, nEval, nSmpl, saveFile, null, false);
     }
 }
