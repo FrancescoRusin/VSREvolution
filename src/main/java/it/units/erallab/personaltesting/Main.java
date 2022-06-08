@@ -23,21 +23,22 @@ public class Main {
             String temp;
             List<Double>[] distanceRuns;
             Listener<? super POSetPopulationState<?, Robot, Outcome>> listener;
-            for (int counter = 10; counter < 11; counter++) {
+            for (int counter = 6; counter < 11; counter++) {
                 for (int name = 0; name < 3; name++) {
                     listener = ListenerUtils.build(
-                            "best,last,all", "best,last,all", Map.ofEntries(
-                                    Map.entry("best", "kick_best_" + names[name] + "_" + counter),
-                                    Map.entry("last", "kick_last_" + names[name] + "_" + counter),
-                                    Map.entry("all", "kick_all_" + names[name] + "_" + counter)
+                            "best,all", "best,all", Map.ofEntries(
+                                    Map.entry("best", "med_best_" + names[name] + "_" + counter),
+                                    Map.entry("all", "med_all_" + names[name] + "_" + counter)
                             ), Map.ofEntries(
                                     Map.entry("experiment.name", "kickstarted_run"), Map.entry("sensor.config", "t+a+vxy"),
                                     Map.entry("solver", "numGA")
                             ));
                     distanceRuns = bodies[name].kickstartedRun(
                             Analyzer.deserializeRobots(
-                                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve 3\\robots_" + names[name] + "_" + counter + ".csv"),
+                                    "\\home\\francescorusin\\VSREvolution\\Pre-med-postevolve\\post_robots_" + names[name] + "_" + counter + ".csv"),
                             10, 100, "kick_robots_" + names[name] + "_" + counter + ".csv", listener);
+                    /*distanceRuns = bodies[name].distanceRun(1, 1, true, 100, 10000,
+                            10, "post_robots_" + names[name] + "_" + counter + ".csv", listener);*/
                     distanceRunsString = "";
                     for (List<Double> distanceRun : distanceRuns) {
                         temp = "";
@@ -55,7 +56,7 @@ public class Main {
                 }
             }
             System.exit(0);
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
