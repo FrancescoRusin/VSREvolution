@@ -2,6 +2,7 @@ package it.units.erallab.builder.solver;
 
 import it.units.erallab.builder.NamedProvider;
 import it.units.erallab.builder.PrototypedFunctionBuilder;
+import it.units.malelab.jgea.core.Factory;
 import it.units.malelab.jgea.core.IndependentFactory;
 import it.units.malelab.jgea.core.TotalOrderQualityBasedProblem;
 import it.units.malelab.jgea.core.operator.GeneticOperator;
@@ -46,7 +47,7 @@ public class DoublesWithStart implements NamedProvider<SolverBuilder<List<Double
         boolean diversity = Boolean.parseBoolean(params.getOrDefault("diversity", "false"));
         boolean remap = Boolean.parseBoolean(params.getOrDefault("remap", "false"));
         double p = Double.parseDouble(params.getOrDefault("baseCaseMut","0.5"));
-        List<Double> startingPoint = Arrays.stream(params.getOrDefault("start","0").split(","))
+        List<Double> startingPoint = Arrays.stream(params.getOrDefault("start","0").split("-"))
                 .map(Double::parseDouble).toList();
         return new SolverBuilder<>() {
             public <S, Q> IterativeSolver<? extends POSetPopulationState<List<Double>, S, Q>,
