@@ -17,6 +17,7 @@ import it.units.malelab.jgea.core.listener.Listener;
 import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -78,7 +79,7 @@ public class BreakDistMLP {
         Collection<Robot> solutions = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         try {
-            solutions = solver.solve(problem, new Random(),executor, listener);
+            solutions = solver.solve(problem, new Random(), executor, listener);
         } catch (SolverException e) {
             System.out.printf("Couldn't solve due to %s%n", e);
         }
@@ -87,7 +88,7 @@ public class BreakDistMLP {
         return (DistributedSensing) a.getInnermostController();
     }
 
-    public DistributedSensing solve(int nPop, int nEval){
+    public DistributedSensing solve(int nPop, int nEval) {
         return solve(nPop, nEval, Listener.deaf());
     }
 
@@ -132,10 +133,10 @@ public class BreakDistMLP {
                                     .apply(grid)
                     );
                     solver = builder.build(new BrainHomoDistributed().build(
-                                            Map.ofEntries(
-                                                    Map.entry("s", String.valueOf(signals)),
-                                                    Map.entry("step", String.valueOf(step))))
-                                    .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
+                                    Map.ofEntries(
+                                            Map.entry("s", String.valueOf(signals)),
+                                            Map.entry("step", String.valueOf(step))))
+                            .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
                     try {
                         solutions[i].add(solver.solve(problem, new Random(), executor, actualListener)
                                 .stream().toList().get(0));
@@ -219,17 +220,17 @@ public class BreakDistMLP {
                         Map.entry("diversity", String.valueOf(diversity))));
         for (int i = 1; i < robots.length; i++) {
             solutions[i] = new ArrayList<>();
-            for(Robot robot : robots[i]) {
+            for (Robot robot : robots[i]) {
                 target = new Robot(
                         Controller.empty(),
                         RobotUtils.buildSensorizingFunction("uniform-" + sensorsType + "-0")
                                 .apply(Analyzer.getBooleanBodyMatrix(robot))
                 );
                 solver = builder.build(new BrainHomoDistributed().build(
-                                        Map.ofEntries(
-                                                Map.entry("s", String.valueOf(signals)),
-                                                Map.entry("step", String.valueOf(step))))
-                                .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
+                                Map.ofEntries(
+                                        Map.entry("s", String.valueOf(signals)),
+                                        Map.entry("step", String.valueOf(step))))
+                        .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), target);
                 try {
                     solutions[i].add(solver.solve(problem, new Random(), executor, actualListener)
                             .stream().toList().get(0));
