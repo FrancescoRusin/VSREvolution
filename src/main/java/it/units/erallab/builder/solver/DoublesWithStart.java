@@ -2,7 +2,6 @@ package it.units.erallab.builder.solver;
 
 import it.units.erallab.builder.NamedProvider;
 import it.units.erallab.builder.PrototypedFunctionBuilder;
-import it.units.malelab.jgea.core.Factory;
 import it.units.malelab.jgea.core.IndependentFactory;
 import it.units.malelab.jgea.core.TotalOrderQualityBasedProblem;
 import it.units.malelab.jgea.core.operator.GeneticOperator;
@@ -16,10 +15,9 @@ import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
 import it.units.malelab.jgea.representation.sequence.FixedLengthListFactory;
 import it.units.malelab.jgea.representation.sequence.UniformCrossover;
 import it.units.malelab.jgea.representation.sequence.numeric.GaussianMutation;
-import it.units.malelab.jgea.representation.sequence.numeric.KickstartedDoubleFactory;
+import it.units.malelab.jgea.representation.sequence.numeric.KickstartedFactory;
 import it.units.malelab.jgea.representation.sequence.numeric.UniformDoubleFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -32,12 +30,14 @@ public class DoublesWithStart implements NamedProvider<SolverBuilder<List<Double
     private final double tournamentRate;
     private final int minNTournament;
     private final double sigmaMut;
+    private final List<Double> startingPoint;
 
-    public DoublesWithStart(double xOverProb, double tournamentRate, int minNTournament, double sigmaMut) {
+    public DoublesWithStart(double xOverProb, double tournamentRate, int minNTournament, double sigmaMut, List<Double> startingPoint) {
         this.xOverProb = xOverProb;
         this.tournamentRate = tournamentRate;
         this.minNTournament = minNTournament;
         this.sigmaMut = sigmaMut;
+        this.startingPoint = startingPoint;
     }
 
     @Override
@@ -47,13 +47,11 @@ public class DoublesWithStart implements NamedProvider<SolverBuilder<List<Double
         boolean diversity = Boolean.parseBoolean(params.getOrDefault("diversity", "false"));
         boolean remap = Boolean.parseBoolean(params.getOrDefault("remap", "false"));
         double p = Double.parseDouble(params.getOrDefault("baseCaseMut","0.5"));
-        List<Double> startingPoint = Arrays.stream(params.getOrDefault("start","0").split("-"))
-                .map(Double::parseDouble).toList();
         return new SolverBuilder<>() {
             public <S, Q> IterativeSolver<? extends POSetPopulationState<List<Double>, S, Q>,
                     TotalOrderQualityBasedProblem<S, Q>, S> build(
                     PrototypedFunctionBuilder<List<Double>, S> builder, S target) {
-                IndependentFactory<List<Double>> doublesFactory = new KickstartedDoubleFactory<>(startingPoint,p,
+                IndependentFactory<List<Double>> doublesFactory = new KickstartedFactory<>(startingPoint,p,
                                 Map.of(new GaussianMutation(sigmaMut), 1d),
                                 new FixedLengthListFactory<>(
                                         builder.exampleFor(target).size(), new UniformDoubleFactory(-1d, 1d)

@@ -4,6 +4,7 @@ import it.units.erallab.builder.NamedProvider;
 import it.units.erallab.builder.PrototypedFunctionBuilder;
 import it.units.erallab.hmsrobots.core.controllers.DistributedSensing;
 import it.units.erallab.hmsrobots.core.controllers.RealFunction;
+import it.units.erallab.hmsrobots.core.controllers.StepController;
 import it.units.erallab.hmsrobots.core.controllers.TimedRealFunction;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.core.objects.Voxel;
@@ -52,6 +53,7 @@ public class BrainHomoDistributed implements NamedProvider<PrototypedFunctionBui
   @Override
   public PrototypedFunctionBuilder<TimedRealFunction, Robot> build(Map<String, String> params) {
     int signals = Integer.parseInt(params.getOrDefault("s","1"));
+    double step = Double.parseDouble(params.getOrDefault("step","0"));
     return new PrototypedFunctionBuilder<>() {
       @Override
       public Function<TimedRealFunction, Robot> buildFor(Robot robot) {
@@ -62,16 +64,16 @@ public class BrainHomoDistributed implements NamedProvider<PrototypedFunctionBui
         return function -> {
           if (function.getInputDimension() != nOfInputs) {
             throw new IllegalArgumentException(String.format(
-                "Wrong number of function input args: %d expected, %d found",
-                nOfInputs,
-                function.getInputDimension()
+                    "Wrong number of function input args: %d expected, %d found",
+                    nOfInputs,
+                    function.getInputDimension()
             ));
           }
           if (function.getOutputDimension() != nOfOutputs) {
             throw new IllegalArgumentException(String.format(
-                "Wrong number of function output args: %d expected, %d found",
-                nOfOutputs,
-                function.getOutputDimension()
+                    "Wrong number of function output args: %d expected, %d found",
+                    nOfOutputs,
+                    function.getOutputDimension()
             ));
           }
           DistributedSensing controller = new DistributedSensing(body, signals);
@@ -80,9 +82,10 @@ public class BrainHomoDistributed implements NamedProvider<PrototypedFunctionBui
               controller.getFunctions().set(entry.key().x(), entry.key().y(), SerializationUtils.clone(function));
             }
           }
-          return new Robot(
-              controller,
-              SerializationUtils.clone(body)
+          return step > 0 ? new Robot(
+                  new StepController(controller, step),
+                  SerializationUtils.clone(body)
+          ) : new Robot(controller, SerializationUtils.clone(body)
           );
         };
       }

@@ -301,7 +301,7 @@ public class Starter extends Worker {
           best().then(basicIndividualFunctions),
           basicOutcomeFunctions.stream().map(f -> f.of(fitness()).of(best())).toList(),
           detailedOutcomeFunctions.stream().map(f -> f.of(fitness()).of(best())).toList(),
-          best().then(serializationFunction(serializationFlags.contains("last")))
+          best().then(serializationFunction(serializationFlags.contains("best")))
       )), keysFunctions(), new File(bestFileName)));
     }
     if (allFileName != null) {
@@ -309,7 +309,7 @@ public class Starter extends Worker {
       functions.addAll(stateExtractor().then(basicFunctions));
       functions.addAll(individualExtractor().then(basicIndividualFunctions));
       functions.addAll(individualExtractor()
-          .then(serializationFunction(serializationFlags.contains("final"))));
+          .then(serializationFunction(serializationFlags.contains("all"))));
       factories.add(new CSVPrinter<>(
           functions,
           keysFunctions(),
