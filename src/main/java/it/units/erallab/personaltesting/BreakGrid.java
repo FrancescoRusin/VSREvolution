@@ -127,9 +127,9 @@ public class BreakGrid {
         return listPossibilities;
     }
 
-    public static List<Grid<Boolean>> crushAndGet(Grid<Boolean> grid, int maxEditDistance, int samples)
+    public static List<Grid<Boolean>> crushAndGet(Grid<Boolean> grid, int editDistance, int samples)
             throws IllegalArgumentException {
-        if (maxEditDistance < 0) {
+        if (editDistance < 0) {
             throw new IllegalArgumentException("Max edit distance must be non-negative");
         } else if (samples < 0) {
             throw new IllegalArgumentException("Number of samples must be non-negative");
@@ -153,7 +153,7 @@ public class BreakGrid {
                     }
                 }
             }
-            for (int counter = 0; counter < maxEditDistance; counter++) {
+            for (int counter = 0; counter < editDistance; counter++) {
                 holder = possibilities.stream().toList().get(random.nextInt(possibilities.size()));
                 chosenOnes.add(holder);
                 possibilities.remove(holder);

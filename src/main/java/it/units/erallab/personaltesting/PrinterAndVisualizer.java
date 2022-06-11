@@ -14,21 +14,21 @@ import java.util.List;
 
 public class PrinterAndVisualizer {
     public static void main(String[] args) {
-        /*try {
-            String name = "worm";
-            int number = 10;
+        try {
+            String name = "biped";
+            int number = 1;
             List<Robot>[] robots = Analyzer.deserializeRobots(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big postevolve\\big_robots_" + name + "_" + number + ".csv");
+                    "C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-post\\kick_robots_" + name + "_" + number + ".csv");
             List<Double>[] results = Analyzer.importResults(
-                    "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big postevolve\\" + name + "_big_postevolve_" + number + ".csv");
+                    "C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-post\\" + name + "_kickevolve_" + number + ".csv");
             List<Robot> best4 = new ArrayList<>();
-            for (int i = 0; i < robots.length; i++) {
+            for (int i = 1; i < robots.length; i++) {
                 best4.add(robots[i].get(results[i].indexOf(Collections.max(results[i]))));
             }
             GridOnlineViewer.run(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), best4);
         } catch (Exception e) {
             System.out.println("Something went wrong: " + e);
-        }*/
+        }
 
 
 
@@ -86,7 +86,7 @@ public class PrinterAndVisualizer {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }*/
+        }
 
 
         try {
@@ -97,6 +97,6 @@ public class PrinterAndVisualizer {
             GridOnlineViewer.run(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), robots[3].get(1));
         } catch (Exception e) {
             System.out.println("Something went wrong: " + e);
-        }
+        }*/
     }
 }

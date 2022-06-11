@@ -1,59 +1,114 @@
 package it.units.erallab.personaltesting;
 
+import it.units.erallab.builder.function.MLP;
+import it.units.erallab.builder.robot.BrainHomoDistributed;
+import it.units.erallab.builder.solver.DoublesStandard;
+import it.units.erallab.hmsrobots.core.controllers.Controller;
+import it.units.erallab.hmsrobots.core.controllers.DistributedSensing;
+import it.units.erallab.hmsrobots.core.controllers.StepController;
+import it.units.erallab.hmsrobots.core.controllers.TimedRealFunction;
 import it.units.erallab.hmsrobots.core.objects.Robot;
 import it.units.erallab.hmsrobots.tasks.locomotion.Outcome;
 import it.units.erallab.hmsrobots.util.Grid;
-import it.units.malelab.jgea.core.listener.Listener;
+import it.units.erallab.hmsrobots.util.RobotUtils;
+import it.units.erallab.hmsrobots.util.SerializationUtils;
+import it.units.erallab.locomotion.Starter;
+import it.units.malelab.jgea.core.TotalOrderQualityBasedProblem;
+import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
 
-import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            BreakDistMLP[] bodies = new BreakDistMLP[3];
-            bodies[0] = new BreakDistMLP(Grid.create(8, 5, (x, y) -> (Math.abs(x - 3.5) > 1 || y > 0)
-                    && Math.abs(x - 3.5) < 2 && y < 3), "t+a+vxy");
-            bodies[1] = new BreakDistMLP(Grid.create(11, 4, (x, y) -> (x % 2 == 0 || y == 1)
-                    && Math.abs(x - 5) < 4 && y < 2), "t+a+vxy");
-            bodies[2] = new BreakDistMLP(Grid.create(9, 4, (x, y) -> Math.abs(x - 4) < 3 && y < 2), "t+a+vxy");
+            Grid<Boolean>[] bodies = new Grid[3];
+            bodies[0] = Grid.create(16, 10, (x, y) -> (Math.abs(x - 7.5) > 2 || y > 1)
+                    && Math.abs(x - 7.5) < 4 && y < 6);
+            bodies[1] = Grid.create(22, 8, (x, y) -> (x % 4 == 0 || x % 4 == 1 || (y - 3) * (y - 2) == 0)
+                    && Math.abs(x - 10.5) < 7 && y < 4);
+            bodies[2] = Grid.create(18, 9, (x, y) -> Math.abs(x - 8.5) < 5 && y < 5);
             String[] names = new String[]{"biped", "comb", "worm"};
-            String distanceRunsString;
-            String temp;
-            List<Double>[] distanceRuns;
-            Listener<? super POSetPopulationState<?, Robot, Outcome>> listener;
-            for (int counter = 6; counter < 11; counter++) {
-                for (int name = 0; name < 3; name++) {
-                    listener = ListenerUtils.build(
-                            "best,all", "best,all", Map.ofEntries(
-                                    Map.entry("best", "med_best_" + names[name] + "_" + counter),
-                                    Map.entry("all", "med_all_" + names[name] + "_" + counter)
-                            ), Map.ofEntries(
-                                    Map.entry("experiment.name", "kickstarted_run"), Map.entry("sensor.config", "t+a+vxy"),
-                                    Map.entry("solver", "numGA")
-                            ));
-                    distanceRuns = bodies[name].kickstartedRun(
-                            Analyzer.deserializeRobots(
-                                    "\\home\\francescorusin\\VSREvolution\\Pre-med-postevolve\\post_robots_" + names[name] + "_" + counter + ".csv"),
-                            10, 100, "kick_robots_" + names[name] + "_" + counter + ".csv", listener);
-                    /*distanceRuns = bodies[name].distanceRun(1, 1, true, 100, 10000,
-                            10, "post_robots_" + names[name] + "_" + counter + ".csv", listener);*/
-                    distanceRunsString = "";
-                    for (List<Double> distanceRun : distanceRuns) {
-                        temp = "";
-                        for (Double s : distanceRun) {
-                            temp += s.toString() + ",";
-                        }
-                        temp = temp.substring(0, temp.length() - 1);
-                        distanceRunsString += temp + "\n";
+            Map<String, Map<String, Map<Integer, Integer>>> correctionMap = Map.ofEntries(
+                    Map.entry("biped",
+                            Map.ofEntries(
+                                    Map.entry("pre", Map.ofEntries(
+                                            Map.entry(4, 3), Map.entry(6, 2))),
+                                    Map.entry("post", Map.ofEntries(
+                                            Map.entry(6, 3)
+                                    )))),
+                    Map.entry("comb",
+                            Map.ofEntries(
+                                    Map.entry("pre", Map.ofEntries(
+                                            Map.entry(4, 2), Map.entry(6, 6))),
+                                    Map.entry("post", Map.ofEntries(
+                                            Map.entry(4, 2), Map.entry(6, 3)
+                                    )))),
+                    Map.entry("worm",
+                            Map.ofEntries(
+                                    Map.entry("pre", Map.ofEntries(
+                                            Map.entry(4, 3), Map.entry(6, 7))),
+                                    Map.entry("post", Map.ofEntries(
+                                            Map.entry(4, 1), Map.entry(6, 5)
+                                    ))))
+            );
+            String temp1, temp2, robots1, robots2;
+            Robot base, robot;
+            List<Grid<Boolean>> brokenBodies1, brokenBodies2;
+            TimedRealFunction optFunction;
+            Random random = new Random();
+            Function<Robot, Outcome> task = Starter.buildLocomotionTask("flat", 30, random, false);
+            IterativeSolver<? extends POSetPopulationState<?, Robot, Outcome>, TotalOrderQualityBasedProblem<Robot, Outcome>, Robot> solver;
+            it.units.erallab.locomotion.Starter.Problem problem = new Starter.Problem(task, Comparator.comparing(Outcome::getVelocity).reversed());
+            ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            for (int name = 0; name < 3; name++) {
+                temp1 = "\n\n";
+                temp2 = "\n\n";
+                robots1 = "\n\n";
+                robots2 = "\n\n";
+                for (int dist = 4; dist < 7; dist += 2) {
+                    brokenBodies1 = BreakGrid.crushAndGet(bodies[name], dist, correctionMap.get(names[name]).get("pre").getOrDefault(dist, 0));
+                    brokenBodies2 = BreakGrid.crushAndGet(bodies[name], dist, correctionMap.get(names[name]).get("post").getOrDefault(dist, 0));
+                    for (Grid<Boolean> brokenBody : brokenBodies1) {
+                        base = Analyzer.deserializeRobots(
+                                "/home/francescorusin/VSREvolution/Big_preevolve/big_robots_" + names[name] + "_" + random.nextInt(1, 11) + ".csv")[0].get(0);
+                        optFunction = ((DistributedSensing) ((StepController) base.getController()).getInnermostController()).getFunctions()
+                                .get(BreakGrid.nonNullVoxel(bodies[name])[0], BreakGrid.nonNullVoxel(bodies[name])[1]);
+                        robot = new Robot(new StepController(new DistributedSensing(1,
+                                Grid.create(bodies[name].getW(), bodies[name].getH(), optFunction.getInputDimension()),
+                                Grid.create(bodies[name].getW(), bodies[name].getH(), optFunction.getOutputDimension()),
+                                Grid.create(bodies[name].getW(), bodies[name].getH(), SerializationUtils.clone(optFunction))), 0.2),
+                                RobotUtils.buildSensorizingFunction("uniform-t+a+vxy-0").apply(brokenBody));
+                        temp1 += task.apply(robot).getDistance() + ",";
+                        robots1 += SerializationUtils.serialize(robot) + ",";
                     }
-                    try {
-                        Analyzer.write(names[name] + "_postevolve_" + counter + ".csv", distanceRunsString);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    for (Grid<Boolean> brokenBody : brokenBodies2) {
+                        solver = new DoublesStandard(0.75, 0.05, 3, 0.35)
+                                .build(Map.ofEntries(
+                                        Map.entry("nPop", String.valueOf(100)),
+                                        Map.entry("nEval", String.valueOf(10000)),
+                                        Map.entry("diversity", String.valueOf(false))))
+                                .build(new BrainHomoDistributed().build(Map.ofEntries(
+                                                Map.entry("s", String.valueOf(1)),
+                                                Map.entry("step", String.valueOf(0.2))))
+                                        .compose(new MLP().build(Map.ofEntries(Map.entry("r", "1")))), new Robot(Controller.empty(),
+                                        RobotUtils.buildSensorizingFunction("uniform-t+a+vxy-0").apply(brokenBody)));
+                        robot = solver.solve(problem, random, executor).stream().toList().get(0);
+                        temp2 += task.apply(robot).getDistance() + ",";
+                        robots2 += SerializationUtils.serialize(robot) + ",";
                     }
+                    temp1 = temp1.substring(0, temp1.length() - 1) + "\n";
+                    temp2 = temp2.substring(0, temp2.length() - 1) + "\n";
+                    robots1 = robots1.substring(0, robots1.length() - 1) + "\n";
+                    robots2 = robots2.substring(0, robots2.length() - 1) + "\n";
                 }
+                Analyzer.write(names[name] + "_preevolve_correction.csv", temp1);
+                Analyzer.write(names[name] + "_postevolve_correction.csv", temp2);
+                Analyzer.write("big_robots_" + names[name] + "_preevolve_correction.csv", robots1);
+                Analyzer.write("big_robots_" + names[name] + "_postevolve_correction.csv", robots2);
             }
             System.exit(0);
         } catch (Exception e) {
