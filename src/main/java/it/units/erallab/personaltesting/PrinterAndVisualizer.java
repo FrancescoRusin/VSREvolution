@@ -39,50 +39,83 @@ public class PrinterAndVisualizer {
             System.out.println("Something went wrong: " + e);
         }*/
 
-        List<Double> results;
-        List<String> postRobots, placeholders1, placeholders2;
-        List<TimedRealFunction> controllers;
-        List<Robot> robots;
-        Grid<Boolean> robotGrid;
-        int number;
-        String tempResults1, tempResults2;
-        Function<Robot, Outcome> task = Starter.buildLocomotionTask("flat", 30, new Random(), false);
-        String[] names = new String[]{"biped", "comb", "worm"};
+        final String[] names = new String[]{"biped"};
+        List<String> results;
+        List<Double>[] reorderer, baseEvolution;
+        String[] placeholder, base;
+        String temp1,temp2;
         try {
             for (String name : names) {
-                for (int counter = 1; counter < 6; counter++) {
-                    postRobots = Analyzer.extractResultsAndRobots("/home/francescorusin/VSREvolution/Pre-med-postevolve/post_all_" + name + "_" + counter + ".csv")[1];
-                    placeholders1 = new ArrayList<>(Arrays.stream(postRobots.remove(0).split("\n")).toList());
-                    placeholders2 = new ArrayList<>();
-                    for (String string : placeholders1) {
-                        placeholders2.addAll(Arrays.stream(string.split(",")).toList());
-                    }
-                    controllers = placeholders2.stream().map(s -> SerializationUtils.deserialize(s, Robot.class))
-                            .map(r -> ((DistributedSensing) ((StepController) r.getController()).getInnermostController())
-                                    .getFunctions().get(BreakGrid.nonNullVoxel(Analyzer.getBooleanBodyMatrix(r))[0], BreakGrid.nonNullVoxel(Analyzer.getBooleanBodyMatrix(r))[0]))
-                            .toList();
-                    tempResults2 = "";
-                    for (String robotString : postRobots) {
-                        robots = new ArrayList<>();
-                        robotGrid = Analyzer.getBooleanBodyMatrix(SerializationUtils.deserialize(robotString.split("\n")[0].split(",")[0], Robot.class));
-                        for (TimedRealFunction c : controllers) {
-                            robots.add(new Robot(new StepController(new DistributedSensing(1,
-                                    Grid.create(robotGrid.getW(), robotGrid.getH(), c.getInputDimension()),
-                                    Grid.create(robotGrid.getW(), robotGrid.getH(), c.getOutputDimension()),
-                                    Grid.create(robotGrid.getW(), robotGrid.getH(), SerializationUtils.clone(c))), 0.2),
-                                    RobotUtils.buildSensorizingFunction("uniform-t+a+vxy-0").apply(robotGrid)));
-                        }
-                        results = BreakDistMLP.evaluate(task, robots);
-                        number = 0;
-                        while (number < results.size()) {
-                            tempResults1 = results.subList(number, number + 100).toString();
-                            tempResults2 += tempResults1.substring(1, tempResults1.length() - 1) + ";";
-                            number += 100;
-                        }
-                        tempResults2 = tempResults2.substring(0, tempResults2.length() - 1) + "\n";
-                    }
-                    Analyzer.write("pre_all_" + name + "_" + counter + ".csv", tempResults2);
+                //kickevolve
+                reorderer = baseEvolution = new List[100];
+                for (int i = 0; i < 100; i++) {
+                    reorderer[i] = new ArrayList<>();
                 }
+                for (int counter = 1; counter < 11; counter++) {
+                    results = Analyzer.extractResultsAndRobots("C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-postevolve\\kick_all_" + name + "_" + counter + ".csv")[0];
+                    for (String result : results) {
+                        placeholder = result.split("\n");
+                        for (int i = 0; i < placeholder.length; i++) {
+                            reorderer[i].add(Collections.max(Arrays.stream(placeholder[i].split(",")).map(Double::parseDouble).toList()));
+                        }
+                    }
+
+                }
+                temp1 = "min median max\n";
+                for(int i = 0; i<reorderer.length-1; i++){
+                    reorderer[i] = reorderer[i].stream().sorted().toList();
+                    temp1+=reorderer[i].get(0)+" "+reorderer[i].get(reorderer[i].size()/2)+" "+reorderer[i].get(reorderer[i].size()-1)+"\n";
+                }
+                Analyzer.write("kick_"+name+"_median_maxmin.csv",temp1);
+                //postevolve
+                for (int i = 0; i < 100; i++) {
+                    reorderer[i] = new ArrayList<>();
+                    baseEvolution[i] = new ArrayList<>();
+                }
+                for (int counter = 1; counter < 11; counter++) {
+                    results = Analyzer.extractResultsAndRobots("C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-postevolve\\post_all_" + name + "_" + counter + ".csv")[0];
+                    base = results.get(0).split("\n");
+                    results = results.subList(1,results.size());
+                    for(int i = 0; i<base.length; i++){
+                        baseEvolution[i].add(Collections.max(Arrays.stream(base[i].split(",")).map(Double::parseDouble).toList()));
+                    }
+                    for (String result : results) {
+                        placeholder = result.split("\n");
+                        for (int i = 0; i < placeholder.length; i++) {
+                            reorderer[i].add(Collections.max(Arrays.stream(placeholder[i].split(",")).map(Double::parseDouble).toList()));
+                        }
+                    }
+
+                }
+                temp1 = temp2 = "min median max\n";
+                for(int i = 0; i<reorderer.length-1; i++){
+                    reorderer[i] = reorderer[i].stream().sorted().toList();
+                    baseEvolution[i] = baseEvolution[i].stream().sorted().toList();
+                    temp1+=reorderer[i].get(0)+" "+reorderer[i].get(reorderer[i].size()/2)+" "+reorderer[i].get(reorderer[i].size()-1)+"\n";
+                    temp2+=baseEvolution[i].get(0)+" "+baseEvolution[i].get(baseEvolution[i].size()/2)+" "+baseEvolution[i].get(baseEvolution[i].size()-1)+"\n";
+                }
+                Analyzer.write("base_"+name+"_median_maxmin.csv",temp2);
+                Analyzer.write("post_"+name+"_median_maxmin.csv",temp1);
+                //preevolve
+                for (int i = 0; i < 100; i++) {
+                    reorderer[i] = new ArrayList<>();
+                }
+                for (int counter = 1; counter < 11; counter++) {
+                    results = Analyzer.read("C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-postevolve\\pre_all_" + name + "_" + counter + ".csv");
+                    for (String result : results) {
+                        placeholder = result.split(";");
+                        for (int i = 0; i < placeholder.length; i++) {
+                            reorderer[i].add(Collections.max(Arrays.stream(placeholder[i].split(",")).map(Double::parseDouble).toList()));
+                        }
+                    }
+
+                }
+                temp1 = "min median max\n";
+                for(int i = 0; i<reorderer.length-1; i++){
+                    reorderer[i] = reorderer[i].stream().map(d -> d/30).sorted().toList();
+                    temp1+=reorderer[i].get(0)+" "+reorderer[i].get(reorderer[i].size()/2)+" "+reorderer[i].get(reorderer[i].size()-1)+"\n";
+                }
+                Analyzer.write("pre_"+name+"_median_maxmin.csv",temp1);
             }
         } catch (IOException e) {
             e.printStackTrace();

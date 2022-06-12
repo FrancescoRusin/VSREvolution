@@ -101,6 +101,17 @@ public class Analyzer {
         return lines;
     }
 
+    public static List<String> read(String path) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
+        String line = bufferedReader.readLine();
+        List<String> lines = new ArrayList<>();
+        while (line != null) {
+            lines.add(line);
+            line = bufferedReader.readLine();
+        }
+        return lines;
+    }
+
     public static Grid<Boolean> getBooleanBodyMatrix(Robot robot){
         Grid<Voxel> voxels = robot.getVoxels();
         return Grid.create(voxels.getW(), voxels.getH(), (x,y) -> !Objects.isNull(voxels.get(x,y)));
