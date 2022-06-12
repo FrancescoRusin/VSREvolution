@@ -60,7 +60,7 @@ public class BreakDistMLP {
                     return f.get();
                 } catch (Exception e) {
                     e.printStackTrace();
-                    return 0d;
+                    return -100d;
                 }
             }).toList();
         } catch (Exception e) {

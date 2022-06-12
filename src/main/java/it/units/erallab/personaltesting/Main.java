@@ -24,11 +24,11 @@ public class Main {
         int number;
         String tempResults1, tempResults2;
         Function<Robot, Outcome> task = Starter.buildLocomotionTask("flat", 30, new Random(), false);
-        String[] names = new String[]{"biped", "comb", "worm"};
+        String[] names = new String[]{"comb","worm"};
         try {
             for (String name : names) {
                 for (int counter = 6; counter < 11; counter++) {
-                    postRobots = Analyzer.extractResultsAndRobots("/home/francescorusin/VSREvolution/Pre-med-postevolve/post_all_" + name + "_" + counter + ".csv")[1];
+                    postRobots = Analyzer.extractResultsAndRobots("/home/francescorusin/VSREvolution/Pre-med-postevolve/post_all_"+name+"_"+counter+".csv")[1];
                     placeholders1 = new ArrayList<>(Arrays.stream(postRobots.remove(0).split("\n")).toList());
                     placeholders2 = new ArrayList<>();
                     for (String string : placeholders1) {
@@ -36,7 +36,7 @@ public class Main {
                     }
                     controllers = placeholders2.stream().map(s -> SerializationUtils.deserialize(s, Robot.class))
                             .map(r -> ((DistributedSensing) ((StepController) r.getController()).getInnermostController())
-                                    .getFunctions().get(BreakGrid.nonNullVoxel(Analyzer.getBooleanBodyMatrix(r))[0], BreakGrid.nonNullVoxel(Analyzer.getBooleanBodyMatrix(r))[0]))
+                                    .getFunctions().get(BreakGrid.nonNullVoxel(Analyzer.getBooleanBodyMatrix(r))[0], BreakGrid.nonNullVoxel(Analyzer.getBooleanBodyMatrix(r))[1]))
                             .toList();
                     tempResults2 = "";
                     for (String robotString : postRobots) {
@@ -53,10 +53,10 @@ public class Main {
                         number = 0;
                         while (number < results.size()) {
                             tempResults1 = results.subList(number, number + 100).toString();
-                            tempResults2 += tempResults1.substring(1, tempResults1.length() - 1) + ";";
+                            tempResults2 += tempResults1.substring(1, tempResults1.length() - 1) + "; ";
                             number += 100;
                         }
-                        tempResults2 = tempResults2.substring(0, tempResults2.length() - 1) + "\n";
+                        tempResults2 = tempResults2.substring(0, tempResults2.length() - 2) + "\n";
                     }
                     Analyzer.write("pre_all_" + name + "_" + counter + ".csv", tempResults2);
                 }
