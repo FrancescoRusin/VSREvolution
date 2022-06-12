@@ -47,6 +47,29 @@ public class BreakDistMLP {
         this(baseBody, sensorsType, 1, 30d, "flat", false, 0.2);
     }
 
+    public static List<Double> evaluate(Function<Robot, Outcome> task, List<Robot> robots) {
+        List<Callable<Double>> evaluations = new ArrayList<>();
+        for (Robot robot : robots) {
+            evaluations.add(() -> task.apply(robot).getDistance());
+        }
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        List<Double> solutions = new ArrayList<>();
+        try {
+            solutions = executor.invokeAll(evaluations).stream().map(f -> {
+                try {
+                    return f.get();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return 0d;
+                }
+            }).toList();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        executor.shutdown();
+        return solutions;
+    }
+
     public Robot buildHomoDistRobot(TimedRealFunction optFunction, Grid<Boolean> body) {
         return new Robot(new StepController(new DistributedSensing(signals,
                 Grid.create(body.getW(), body.getH(), optFunction.getInputDimension()),

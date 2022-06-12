@@ -32,6 +32,45 @@ public class Analyzer {
         return result;
     }
 
+    public static List<String>[] extractResultsAndRobots(String path) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
+        List<String> results = new ArrayList<>();
+        List<String> robots = new ArrayList<>();
+        String evolutionResults = "";
+        String evolutionRobots = "";
+        String generationResults = "";
+        String generationRobots = "";
+        bufferedReader.readLine();
+        String[] holder;
+        String hyperHolder = bufferedReader.readLine();
+        int counter = 100;
+        while (!Objects.isNull(hyperHolder)) {
+            holder = hyperHolder.split(";");
+            if (Integer.parseInt(holder[11]) < counter) {
+                evolutionResults += generationResults.substring(0, generationResults.length() - 1) + "\n";
+                evolutionRobots += generationRobots.substring(0, generationRobots.length() - 1) + "\n";
+                generationResults = "";
+                generationRobots = "";
+                robots.add(evolutionRobots);
+                results.add(evolutionResults);
+                evolutionResults = "";
+                evolutionRobots = "";
+            } else if (Integer.parseInt(holder[11]) > counter) {
+                evolutionResults += generationResults.substring(0, generationResults.length() - 1) + "\n";
+                evolutionRobots += generationRobots.substring(0, generationRobots.length() - 1) + "\n";
+                generationResults = "";
+                generationRobots = "";
+            }
+            counter = Integer.parseInt(holder[11]);
+            generationResults += holder[19] + ",";
+            generationRobots += holder[20] + ",";
+            hyperHolder = bufferedReader.readLine();
+        }
+        robots.add(evolutionRobots);
+        results.add(evolutionResults);
+        return new List[]{results, robots};
+    }
+
     public static List<Robot>[] deserializeRobots(String path) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
         String line = bufferedReader.readLine();
