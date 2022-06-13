@@ -10,9 +10,12 @@ import java.util.*;
 
 public class Analyzer {
 
-    public Analyzer(){
+    public Analyzer() {
     }
 
+    public static int nonNullElements(Grid grid) {
+        return (int) grid.count(g -> !Objects.isNull(g));
+    }
 
     public static String resultsAndSize(String robotsPath, String resultsPath) throws IOException {
         List<Robot>[] lines = deserializeRobots(robotsPath);
@@ -23,7 +26,7 @@ public class Analyzer {
         String result = "";
         for (int i = 0; i < lines.length; i++) {
             reslines[i] = Arrays.stream(bufferedReader.readLine().split(",")).map(Double::parseDouble).toList();
-            counter = lines[i].stream().map(r -> (int) r.getVoxels().count(v -> !Objects.isNull(v))).toList();
+            counter = lines[i].stream().map(r -> nonNullElements(r.getVoxels())).toList();
             for (int j = 0; j < counter.size() - 1; j++) {
                 result += reslines[i].get(j) + "+" + counter.get(j) + ",";
             }
@@ -76,8 +79,13 @@ public class Analyzer {
         String line = bufferedReader.readLine();
         List<List<Robot>> templines = new ArrayList<>();
         while (line != null) {
-            templines.add(Arrays.stream(line.split(",")).map(s -> SerializationUtils.deserialize(s, Robot.class)).toList());
-            line = bufferedReader.readLine();
+            if (line.equals("")) {
+                line = bufferedReader.readLine();
+                templines.add(List.of());
+            } else {
+                templines.add(Arrays.stream(line.split(",")).map(s -> SerializationUtils.deserialize(s, Robot.class)).toList());
+                line = bufferedReader.readLine();
+            }
         }
         List<Robot>[] lines = new List[templines.size()];
         for (int i = 0; i < lines.length; i++) {
@@ -91,8 +99,13 @@ public class Analyzer {
         String line = bufferedReader.readLine();
         List<List<Double>> templines = new ArrayList<>();
         while (line != null) {
-            templines.add(Arrays.stream(line.split(",")).map(Double::parseDouble).toList());
-            line = bufferedReader.readLine();
+            if (line.equals("")) {
+                line = bufferedReader.readLine();
+                templines.add(List.of());
+            } else {
+                templines.add(Arrays.stream(line.split(",")).map(Double::parseDouble).toList());
+                line = bufferedReader.readLine();
+            }
         }
         List<Double>[] lines = new List[templines.size()];
         for (int i = 0; i < lines.length; i++) {
@@ -112,9 +125,9 @@ public class Analyzer {
         return lines;
     }
 
-    public static Grid<Boolean> getBooleanBodyMatrix(Robot robot){
+    public static Grid<Boolean> getBooleanBodyMatrix(Robot robot) {
         Grid<Voxel> voxels = robot.getVoxels();
-        return Grid.create(voxels.getW(), voxels.getH(), (x,y) -> !Objects.isNull(voxels.get(x,y)));
+        return Grid.create(voxels.getW(), voxels.getH(), (x, y) -> !Objects.isNull(voxels.get(x, y)));
     }
 
     public static void write(String fileName, String string) throws IOException {
@@ -123,12 +136,23 @@ public class Analyzer {
         writer.close();
     }
 
-    public static void printGrid(Grid<Boolean> grid){
-        for(int j=grid.getH()-1; j>-1;j--){
-            for(int i = 0; i< grid.getW();i++){
-                System.out.print(grid.get(i,j) ? " O " : " - ");
+    public static void printGrid(Grid<Boolean> grid) {
+        for (int j = grid.getH() - 1; j > -1; j--) {
+            for (int i = 0; i < grid.getW(); i++) {
+                System.out.print(grid.get(i, j) ? " O " : " - ");
             }
             System.out.println();
         }
+    }
+
+    public static String binaryGrid(Grid<Boolean> grid) {
+        String map = "";
+        for (int j = 0; j < grid.getH(); j++) {
+            for (int i = 0; i < grid.getW(); i++) {
+                map += grid.get(i, j) ? "1" : "0";
+            }
+            map += "-";
+        }
+        return map.substring(0, map.length() - 1);
     }
 }
