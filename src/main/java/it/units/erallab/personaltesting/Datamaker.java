@@ -1,7 +1,6 @@
 package it.units.erallab.personaltesting;
 
 import it.units.erallab.hmsrobots.core.objects.Robot;
-import it.units.erallab.hmsrobots.util.Grid;
 
 import java.util.*;
 
@@ -63,7 +62,7 @@ public class Datamaker {
                         }
                     }
                     for (int i = 0; i < 4; i++) {
-                        reorderer = holder[i].stream().sorted().toArray();
+                        reorderer = holder[i].stream().sorted().map(d -> d / 30d).toArray();
                         length = reorderer.length;
                         results += name + "_big_p" + policy + "evolve " + i / size.get("big" + name) +
                                 " " + reorderer[length / 2] +
@@ -106,7 +105,7 @@ public class Datamaker {
                         }
                     }
                 }
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 99; i++) {
                     reorderer = baseresults[i].stream().sorted().toArray();
                     length = reorderer.length;
                     results += name + "_baseevolve " + (i + 1) * 100 +
@@ -114,7 +113,7 @@ public class Datamaker {
                             " " + reorderer[length / 4] + " " + reorderer[3 * length / 4] +
                             " " + reorderer[0] + " " + reorderer[length - 1] + "\n";
                 }
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 99; i++) {
                     reorderer = tempresults[i].stream().sorted().toArray();
                     length = reorderer.length;
                     results += name + "_postevolve " + (i + 1) * 100 +
@@ -134,7 +133,7 @@ public class Datamaker {
                         }
                     }
                 }
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 99; i++) {
                     reorderer = tempresults[i].stream().sorted().toArray();
                     length = reorderer.length;
                     results += name + "_kickevolve " + (i + 1) * 100 +
@@ -173,7 +172,11 @@ public class Datamaker {
     }
 
     public static void RQ3() {
-        String results = "size fitness morphology\n";
+        String results = "size fitness morphology specials\n";
+        final String horse = "010010-011110-011110-000011";
+        final String Talos = "011010-011110-011110-000000";
+        String binary;
+        String special;
         List<Double>[] tempfitness;
         List<Double> fitness = new ArrayList<>();
         List<Robot>[] temprobots;
@@ -189,13 +192,17 @@ public class Datamaker {
                     fitness.addAll(tempfitness[i]);
                 }
             }
-            for(int i = 0; i< fitness.size();i++){
+            for (int i = 0; i < fitness.size(); i++) {
                 orderer.add(i);
             }
-            Collections.sort(orderer, (o1,o2) -> (int) -Math.signum(fitness.get(o1)-fitness.get(o2)));
+            Collections.sort(orderer, (o1, o2) -> (int) -Math.signum(fitness.get(o1) - fitness.get(o2)));
             for (int i = 0; i < robots.size(); i++) {
                 robot = robots.get(orderer.get(i));
-                results += Analyzer.nonNullElements(robot.getVoxels()) + " " + fitness.get(orderer.get(i)) + " " + Analyzer.binaryGrid(Analyzer.getBooleanBodyMatrix(robot)) + "\n";
+                binary = Analyzer.binaryGrid(Analyzer.getBooleanBodyMatrix(robot));
+                special = binary.equals(horse) ? " horse" : binary.equals(Talos) ? " Talos" : "";
+                results += Analyzer.nonNullElements(robot.getVoxels()) + " " +
+                        fitness.get(orderer.get(i)) / 30d + " " +
+                        binary + special + "\n";
             }
             Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\RQ3.txt", results);
         } catch (Exception e) {
