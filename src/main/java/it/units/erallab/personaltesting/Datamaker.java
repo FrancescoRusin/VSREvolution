@@ -175,6 +175,7 @@ public class Datamaker {
         String results = "size fitness morphology specials\n";
         final String horse = "010010-011110-011110-000011";
         final String Talos = "011010-011110-011110-000000";
+        final String biped = "010010-011110-011110-000000";
         String binary;
         String special;
         List<Double>[] tempfitness;
@@ -199,7 +200,7 @@ public class Datamaker {
             for (int i = 0; i < robots.size(); i++) {
                 robot = robots.get(orderer.get(i));
                 binary = Analyzer.binaryGrid(Analyzer.getBooleanBodyMatrix(robot));
-                special = binary.equals(horse) ? " horse" : binary.equals(Talos) ? " Talos" : "";
+                special = binary.equals(horse) ? " horse" : binary.equals(Talos) ? " Talos" : binary.equals(biped) ? " biped" : "";
                 results += Analyzer.nonNullElements(robot.getVoxels()) + " " +
                         fitness.get(orderer.get(i)) / 30d + " " +
                         binary + special + "\n";
