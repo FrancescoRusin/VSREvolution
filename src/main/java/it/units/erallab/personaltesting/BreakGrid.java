@@ -127,6 +127,9 @@ public class BreakGrid {
         return listPossibilities;
     }
 
+    protected record xy(int x, int y){
+    }
+
     public static List<Grid<Boolean>> crushAndGet(Grid<Boolean> grid, int editDistance, int samples)
             throws IllegalArgumentException {
         if (editDistance < 0) {
@@ -134,47 +137,50 @@ public class BreakGrid {
         } else if (samples < 0) {
             throw new IllegalArgumentException("Number of samples must be non-negative");
         }
-        Set<List<Integer>> possibilities;
-        Set<List<Integer>> chosenOnes;
-        Set<Set<List<Integer>>> results = new HashSet<>();
+        Set<xy> possibilities;
+        Set<xy> chosenOnes;
+        Set<Set<xy>> results = new HashSet<>();
         Random random = new Random();
-        List<Integer> holder;
+        xy holder, temp;
         int iterations = 0;
-        while (results.size() < samples && iterations < 1e6) {
-            possibilities = new HashSet<>();
-            chosenOnes = new HashSet<>();
+        while (results.size() < samples && iterations < samples*1e5) {
+            possibilities = new HashSet<xy>();
+            chosenOnes = new HashSet<xy>();
             for (int i = 0; i < grid.getW(); i++) {
                 for (int j = 0; j < grid.getH(); j++) {
-                    possibilities.add(List.of(i, j));
-                    for (Dir dir : Dir.values()) {
-                        if (!Objects.isNull(grid.get(i + dir.dx, j + dir.dy))) {
-                            possibilities.add(List.of(i + dir.dx, j + dir.dy));
+                    if (grid.get(i, j)) {
+                        possibilities.add(new xy(i, j));
+                        for (Dir dir : Dir.values()) {
+                            if (!Objects.isNull(grid.get(i + dir.dx, j + dir.dy))) {
+                                possibilities.add(new xy(i + dir.dx, j + dir.dy));
+                            }
                         }
                     }
                 }
             }
             for (int counter = 0; counter < editDistance; counter++) {
                 holder = possibilities.stream().toList().get(random.nextInt(possibilities.size()));
-                chosenOnes.add(holder);
+                chosenOnes.add(new xy(holder.x, holder.y));
                 possibilities.remove(holder);
                 for (Dir dir : Dir.values()) {
-                    if (!(Objects.isNull(grid.get(holder.get(0), holder.get(1))))) {
-                        if (!chosenOnes.contains(List.of(holder.get(0) + dir.dx, holder.get(1) + dir.dy))) {
-                            possibilities.add(List.of(holder.get(0) + dir.dx, holder.get(1) + dir.dy));
+                    temp = new xy(holder.x + dir.dx, holder.y + dir.dy);
+                    if (!Objects.isNull(grid.get(temp.x, temp.y))) {
+                        if (!chosenOnes.contains(temp)) {
+                            possibilities.add(temp);
                         }
                     }
                 }
             }
-            Set<List<Integer>> tempCopy = chosenOnes;
+            Set<xy> tempCopy = chosenOnes;
             if (isConnected(Grid.create(grid.getW(), grid.getH(),
-                    (x, y) -> tempCopy.contains(List.of(x, y)) != grid.get(x, y)))) {
-                results.add(chosenOnes);
+                    (x, y) -> tempCopy.contains(new xy(x, y)) != grid.get(x, y)))) {
+                results.add(new HashSet<>(chosenOnes));
             }
             iterations += 1;
         }
         return results.stream()
                 .map(res -> Grid.create(grid.getW(), grid.getH(),
-                        (x, y) -> res.contains(List.of(x, y)) != grid.get(x, y)))
+                        (x, y) -> res.contains(new xy(x, y)) != grid.get(x, y)))
                 .toList();
     }
 }

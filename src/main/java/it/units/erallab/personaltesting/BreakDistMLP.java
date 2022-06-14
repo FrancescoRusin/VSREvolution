@@ -115,7 +115,7 @@ public class BreakDistMLP {
         return solve(nPop, nEval, Listener.deaf());
     }
 
-    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve,
+    public List<Double>[] distanceRun(int editDistance, int distanceStep, boolean postEvolve, boolean skipBase,
                                       int nPop, int nEval, int nSmpl, String saveFile,
                                       Listener<? super POSetPopulationState<?, Robot, Outcome>> listener) {
         if (editDistance % distanceStep != 0) {
@@ -123,8 +123,28 @@ public class BreakDistMLP {
         }
         Listener<? super POSetPopulationState<?, Robot, Outcome>> actualListener =
                 Objects.isNull(listener) ? Listener.deaf() : listener;
-        TimedRealFunction optFunction = solve(nPop, nEval, actualListener).getFunctions()
-                .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
+        final TimedRealFunction optFunction;
+        if (skipBase) {
+            optFunction = new TimedRealFunction() {
+                @Override
+                public double[] apply(double t, double[] input) {
+                    return new double[]{0, 0, 0, 0, 0};
+                }
+
+                @Override
+                public int getInputDimension() {
+                    return 8;
+                }
+
+                @Override
+                public int getOutputDimension() {
+                    return 5;
+                }
+            };
+        } else {
+            optFunction = solve(nPop, nEval, actualListener).getFunctions()
+                    .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
+        }
         int actualDistance = editDistance / distanceStep;
         List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
         brokenGrids[0] = List.of(baseBody);
@@ -201,7 +221,8 @@ public class BreakDistMLP {
         }
         if (!Objects.isNull(saveFile)) {
             String placeholder = "";
-            for (int i = 0; i < actualDistance + 1; i++) {
+            int starter = skipBase ? 1 : 0;
+            for (int i = starter; i < actualDistance + 1; i++) {
                 placeholder += String.join(",", solutions[i].stream()
                         .map(SerializationUtils::serialize).toList()) + "\n";
             }
