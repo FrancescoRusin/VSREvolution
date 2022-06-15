@@ -7,7 +7,7 @@ import java.util.*;
 public class Datamaker {
 
     public static void main(String[] args) {
-        RQ3();
+        RQ2a();
     }
 
     public static void RQ1() {
@@ -143,6 +143,77 @@ public class Datamaker {
                 }
             }
             Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\RQ2.txt", results);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void RQ2a() {
+        final String[] names = new String[]{"biped", "comb", "worm"};
+        String results = "morphology_policy n_evaluations fitness_median fitness_q1 fitness_q3 fitness_min fitness_max\n";
+        List<Double>[] tempresults = new List[100];
+        List<Double>[] baseresults = new List[100];
+        List<String> experiments;
+        String[] base, temp;
+        int length;
+        Object[] reorderer;
+        try {
+            for (String name : names) {
+                for (int i = 0; i < 100; i++) {
+                    tempresults[i] = new ArrayList<>();
+                    baseresults[i] = new ArrayList<>();
+                }
+                for (int counter = 1; counter < 11; counter++) {
+                    experiments = Analyzer.read("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\Evolution\\post_" + name + "_data_" + counter + ".csv");
+                    base = experiments.remove(0).split(";");
+                    for (int i = 0; i < base.length; i++) {
+                        baseresults[i].add(Collections.max((Arrays.stream(base[i].split(",")).map(Double::parseDouble).toList())));
+                    }
+                    for (String experiment : experiments) {
+                        temp = experiment.split(";");
+                        for (int i = 0; i < temp.length; i++) {
+                            tempresults[i].add(Collections.max(Arrays.stream(temp[i].split(",")).map(Double::parseDouble).toList()));
+                        }
+                    }
+                }
+                for (int i = 0; i < 99; i++) {
+                    reorderer = baseresults[i].stream().sorted().toArray();
+                    length = reorderer.length;
+                    results += name + "_baseevolve " + (i + 1) * 100 +
+                            " " + reorderer[length / 2] +
+                            " " + reorderer[length / 4] + " " + reorderer[3 * length / 4] +
+                            " " + reorderer[0] + " " + reorderer[length - 1] + "\n";
+                }
+                for (int i = 0; i < 99; i++) {
+                    reorderer = tempresults[i].stream().sorted().toArray();
+                    length = reorderer.length;
+                    results += name + "_postevolve " + (i + 1) * 100 +
+                            " " + reorderer[length / 2] +
+                            " " + reorderer[length / 4] + " " + reorderer[3 * length / 4] +
+                            " " + reorderer[0] + " " + reorderer[length - 1] + "\n";
+                }
+                for (int i = 0; i < 100; i++) {
+                    tempresults[i] = new ArrayList<>();
+                }
+                for (int counter = 1; counter < 11; counter++) {
+                    experiments = Analyzer.read("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\Evolution\\kick_" + name + "_data_" + counter + ".csv");
+                    for (String experiment : experiments) {
+                        temp = experiment.split(";");
+                        for (int i = 0; i < temp.length; i++) {
+                            tempresults[i].add(Collections.max((Arrays.stream(temp[i].split(",")).map(Double::parseDouble).toList())));
+                        }
+                    }
+                }
+                for (int i = 0; i < 99; i++) {
+                    reorderer = tempresults[i].stream().sorted().toArray();
+                    length = reorderer.length;
+                    results += name + "_kickevolve " + (i + 1) * 100 +
+                            " " + reorderer[length / 2] +
+                            " " + reorderer[length / 4] + " " + reorderer[3 * length / 4] +
+                            " " + reorderer[0] + " " + reorderer[length - 1] + "\n";
+                }
+            }
+            Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\RQ2a.txt", results);
         } catch (Exception e) {
             e.printStackTrace();
         }
