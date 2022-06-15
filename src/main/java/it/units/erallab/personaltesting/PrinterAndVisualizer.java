@@ -22,23 +22,46 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class PrinterAndVisualizer {
-    public static void main(String[] args) {
-        /*try {
-            String name = "biped";
-            int number = 1;
-            List<Robot>[] robots = Analyzer.deserializeRobots(
-                    "C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-post\\kick_robots_" + name + "_" + number + ".csv");
-            List<Double>[] results = Analyzer.importResults(
-                    "C:\\Users\\Admi9n\\Desktop\\Università\\Tesi magistrale\\Risultati\\Pre-med-post\\" + name + "_kickevolve_" + number + ".csv");
-            List<Robot> best4 = new ArrayList<>();
-            for (int i = 1; i < robots.length; i++) {
-                best4.add(robots[i].get(results[i].indexOf(Collections.max(results[i]))));
-            }
-            GridOnlineViewer.run(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), best4);
-        } catch (Exception e) {
-            System.out.println("Something went wrong: " + e);
-        }*/
 
+    public static void main(String[] args) {
+        performances();
+    }
+
+    public static void performances() {
+        final String[] names = new String[]{"biped"};
+        final int[] counters = new int[]{1, 6};
+        List<Robot>[] temprobots;
+        List<Robot>[] robots = new List[2];
+        List<Double>[] tempresults;
+        List<Double>[] results = new List[2];
+        List<Robot> best2;
+        try {
+            for (String name : names) {
+                for (int i = 0; i < 2; i++) {
+                    robots[i] = new ArrayList<>();
+                    results[i] = new ArrayList<>();
+                }
+                for (int counter : counters) {
+                    temprobots = new List[]{Analyzer.deserializeRobots("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big\\Big postevolve 2\\big_robots_ed8_" + name + "_" + counter + ".csv")[0],
+                            Analyzer.deserializeRobots("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big\\Big postevolve 2\\big_robots_ed12_" + name + "_" + counter + ".csv")[0]};
+                    tempresults = Analyzer.importResults("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big\\Big postevolve 2\\big_" + name + "_postevolve_ed8+12_" + counter + ".csv");
+                    for (int i = 0; i < 2; i++) {
+                        robots[i].addAll(temprobots[i]);
+                        results[i].addAll(tempresults[i]);
+                    }
+                }
+                best2 = new ArrayList<>();
+                for (int i = 0; i < robots.length; i++) {
+                    best2.add(robots[i].get(results[i].indexOf(Collections.max(results[i]))));
+                }
+                GridOnlineViewer.run(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), best2);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void evolutionResults() {
         final String[] names = new String[]{"biped"};
         List<String> results;
         List<Double>[] reorderer, baseEvolution;
@@ -120,28 +143,6 @@ public class PrinterAndVisualizer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-
-        /*try {
-            String[] names = new String[]{"biped","comb","worm"};
-            String resultsAndSize;
-            for(String name : names) {
-                for (int number = 1; number < 11; number++) {
-                    resultsAndSize = "";
-                    resultsAndSize += Analyzer.resultsAndSize(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big preevolve\\big_robots_" + name + "_" + number + ".csv",
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big preevolve\\" + name + "_big_preevolve_" + number + ".csv");
-                    Analyzer.write(
-                            "C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big preevolve\\Big_" + name + "_" + number + "_preevolve_size.csv",
-                            resultsAndSize);
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Something went wrong: " + e);
-        }*/
-
-
 
 
         /*try {
