@@ -7,7 +7,7 @@ import java.util.*;
 public class Datamaker {
 
     public static void main(String[] args) {
-        RQ2a();
+        RQ4();
     }
 
     public static void RQ1() {
@@ -244,9 +244,9 @@ public class Datamaker {
 
     public static void RQ3() {
         String results = "size fitness morphology specials\n";
-        final String horse = "010010-011110-011110-000011";
-        final String Talos = "011010-011110-011110-000000";
-        final String biped = "010010-011110-011110-000000";
+        final String horse = "000011-011110-011110-010010";
+        final String Talos = "000000-011110-011110-011010";
+        final String biped = "000000-011110-011110-010010";
         String binary;
         String special;
         List<Double>[] tempfitness;
@@ -277,6 +277,31 @@ public class Datamaker {
                         binary + special + "\n";
             }
             Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\RQ3.txt", results);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void RQ4() {
+        String results = "base_form morphology\n";
+        final String[] names = new String[]{"biped", "comb", "worm"};
+        String binary;
+        List<Robot> robots;
+        List<Integer> orderer = new ArrayList<>();
+        try {
+            for(String name : names) {
+                robots = Analyzer.deserializeRobots("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Postevolve\\robots_" + name + "_1.csv")[1];
+                for (Robot robot : robots) {
+                    binary = Analyzer.binaryGrid(Analyzer.getBooleanBodyMatrix(robot));
+                    results += name + "_small " + "\\vsr{" + robot.getVoxels().getW() + "}{" + robot.getVoxels().getH() + "}{" + binary + "}\n";
+                }
+                robots = Analyzer.deserializeRobots("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Big\\Big postevolve\\big_robots_" + name + "_1.csv")[1];
+                for (Robot robot : robots) {
+                    binary = Analyzer.binaryGrid(Analyzer.getBooleanBodyMatrix(robot));
+                    results += name + "_big " + "\\vsr{" + robot.getVoxels().getW() + "}{" + robot.getVoxels().getH() + "}{" + binary + "}\n";
+                }
+            }
+            Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\RQ4.txt", results);
         } catch (Exception e) {
             e.printStackTrace();
         }

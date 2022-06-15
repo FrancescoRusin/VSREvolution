@@ -147,7 +147,7 @@ public class Analyzer {
 
     public static String binaryGrid(Grid<Boolean> grid) {
         String map = "";
-        for (int j = 0; j < grid.getH(); j++) {
+        for (int j = grid.getH() - 1; j > -1; j--) {
             for (int i = 0; i < grid.getW(); i++) {
                 map += grid.get(i, j) ? "1" : "0";
             }
