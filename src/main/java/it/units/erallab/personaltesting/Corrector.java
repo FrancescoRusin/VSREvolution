@@ -79,7 +79,7 @@ public class Corrector {
                         base = Analyzer.deserializeRobots(
                                 "/home/francescorusin/VSREvolution/Big_preevolve/big_robots_" + names[name] + "_" + random.nextInt(1, 11) + ".csv")[0].get(0);
                         optFunction = ((DistributedSensing) ((StepController) base.getController()).getInnermostController()).getFunctions()
-                                .get(BreakGrid.nonNullVoxel(bodies[name])[0], BreakGrid.nonNullVoxel(bodies[name])[1]);
+                                .get(BreakGrid.getTrueElement(bodies[name])[0], BreakGrid.getTrueElement(bodies[name])[1]);
                         robot = new Robot(new StepController(new DistributedSensing(1,
                                 Grid.create(bodies[name].getW(), bodies[name].getH(), optFunction.getInputDimension()),
                                 Grid.create(bodies[name].getW(), bodies[name].getH(), optFunction.getOutputDimension()),

@@ -6,7 +6,7 @@ import java.util.*;
 
 public class BreakGrid {
 
-    public static int[] nonNullVoxel(Grid<Boolean> grid) {
+    public static int[] getTrueElement(Grid<Boolean> grid) {
         for (int i = 0; i < grid.getW(); i++) {
             for (int j = 0; j < grid.getH(); j++) {
                 if (grid.get(i, j)) {

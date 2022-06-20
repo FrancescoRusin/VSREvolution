@@ -10,7 +10,7 @@ import java.util.*;
 
 public class Analyzer {
 
-    public Analyzer() {
+    private Analyzer() {
     }
 
     public static int nonNullElements(Grid grid) {

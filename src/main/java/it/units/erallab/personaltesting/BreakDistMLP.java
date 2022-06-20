@@ -17,7 +17,6 @@ import it.units.malelab.jgea.core.listener.Listener;
 import it.units.malelab.jgea.core.solver.IterativeSolver;
 import it.units.malelab.jgea.core.solver.SolverException;
 import it.units.malelab.jgea.core.solver.state.POSetPopulationState;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -143,7 +142,7 @@ public class BreakDistMLP {
             };
         } else {
             optFunction = solve(nPop, nEval, actualListener).getFunctions()
-                    .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
+                    .get(BreakGrid.getTrueElement(baseBody)[0], BreakGrid.getTrueElement(baseBody)[1]);
         }
         int actualDistance = editDistance / distanceStep;
         List<Grid<Boolean>>[] brokenGrids = new List[actualDistance + 1];
@@ -240,7 +239,7 @@ public class BreakDistMLP {
         Grid<Boolean> baseBody = Analyzer.getBooleanBodyMatrix(robots[0].get(0));
         MultiLayerPerceptron baseNetwork = (MultiLayerPerceptron) ((DistributedSensing) ((StepController) robots[0].get(0)
                 .getController()).getInnermostController()).getFunctions()
-                .get(BreakGrid.nonNullVoxel(baseBody)[0], BreakGrid.nonNullVoxel(baseBody)[1]);
+                .get(BreakGrid.getTrueElement(baseBody)[0], BreakGrid.getTrueElement(baseBody)[1]);
         List<Double> weights = new ArrayList<>();
         for (Double w : MultiLayerPerceptron.flat(baseNetwork.getWeights(), baseNetwork.getNeurons())) {
             weights.add(w);
