@@ -2,12 +2,13 @@ package it.units.erallab.personaltesting;
 
 import it.units.erallab.hmsrobots.core.objects.Robot;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Datamaker {
 
     public static void main(String[] args) {
-        RQ4();
+        THB();
     }
 
     public static void RQ1() {
@@ -303,6 +304,52 @@ public class Datamaker {
             }
             Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\RQ4.txt", results);
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void THB() {
+        String results = "morphology fitness_median fitness_q1 fitness_q3 fitness_min fitness_max\n";
+        List<Double>[] tempresults;
+        List<Double> bipedresults = new ArrayList<>();
+        List<Double> horseresults = new ArrayList<>();
+        List<Double> talosresults = new ArrayList<>();
+        List<Double> THresults = new ArrayList<>();
+        try {
+            for (int counter = 1; counter < 11; counter++) {
+                bipedresults.addAll(Analyzer.importResults("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\biped_postevolve_" + counter + ".csv")[0]);
+            }
+            tempresults = Analyzer.importResults("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Horse\\Horse_results.csv");
+            for(List<Double> t : tempresults){
+                horseresults.addAll(t);
+            }
+            tempresults = Analyzer.importResults("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos biped\\Talos_bipeds_results.csv");
+            for(List<Double> t : tempresults){
+                talosresults.addAll(t);
+            }
+            tempresults = Analyzer.importResults("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Custom bodies\\Talos horse\\Talos_horse_results.csv");
+            for(List<Double> t : tempresults){
+                THresults.addAll(t);
+            }
+            Collections.sort(bipedresults);
+            Collections.sort(horseresults);
+            Collections.sort(talosresults);
+            Collections.sort(THresults);
+            Analyzer.write("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Data\\Talos_horse_biped_TH.csv",
+                    "morphology fitness_median fitness_q1 fitness_q3 fitness_min fitness_max\n" +
+                    String.format("biped %f %f %f %f %f\n", bipedresults.get(bipedresults.size()/2),
+                    bipedresults.get(bipedresults.size()/4), bipedresults.get(bipedresults.size()*3/4),
+                    bipedresults.get(0), bipedresults.get(bipedresults.size() - 1)) +
+                    String.format("Talos %f %f %f %f %f\n", talosresults.get(talosresults.size()/2),
+                            talosresults.get(talosresults.size()/4), talosresults.get(talosresults.size()*3/4),
+                            talosresults.get(0), talosresults.get(talosresults.size() - 1)) +
+                    String.format("Horse %f %f %f %f %f\n", horseresults.get(horseresults.size()/2),
+                            horseresults.get(horseresults.size()/4), horseresults.get(horseresults.size()*3/4),
+                            horseresults.get(0), horseresults.get(horseresults.size() - 1)) +
+                    String.format("TH %f %f %f %f %f\n", THresults.get(THresults.size()/2),
+                            THresults.get(THresults.size()/4), THresults.get(THresults.size()*3/4),
+                            THresults.get(0), THresults.get(THresults.size() - 1)));
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

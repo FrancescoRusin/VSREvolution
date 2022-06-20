@@ -143,56 +143,56 @@ public class PrinterAndVisualizer {
     }
 
 
-        public static void videos () {
-            try {
-                List<List<Robot>> postrobots = new ArrayList<>();
-                List<List<Robot>> kickrobots = new ArrayList<>();
-                List<List<Double>> results = new ArrayList<>();
-                List<Robot>[] temprobots1, temprobots2;
-                List<Double>[] tempresults;
-                List<Robot> bestrobots = new ArrayList<>();
-                List<Double> bestresults = new ArrayList<>();
-                List<Robot> target4 = new ArrayList<>();
-                for (int number = 1; number < 11; number++) {
-                    temprobots1 = Analyzer.deserializeRobots(
-                            String.format("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\post_robots_biped_%d.csv", number));
-                    temprobots2 = Analyzer.deserializeRobots(
-                            String.format("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\kick_robots_biped_%d.csv", number));
-                    tempresults = Analyzer.importResults(
-                            String.format("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\biped_postevolve_%d.csv", number));
-                    bestrobots.addAll(temprobots1[0]);
-                    bestresults.addAll(tempresults[0]);
-                    postrobots.add(temprobots1[1]);
-                    kickrobots.add(temprobots2[1]);
-                    results.add(tempresults[1]);
-                }
-                int bestindex = 4;
-                int bestpostindex = 9;
-                Robot robot = bestrobots.get(bestindex);
-                Grid<Boolean> booleanBody = Analyzer.getBooleanBodyMatrix(robot);
-                int[] goodVoxel = BreakGrid.getTrueElement(Analyzer.getBooleanBodyMatrix(robot));
-                TimedRealFunction optFunction = ((DistributedSensing) ((StepController) robot.getController()).getInnermostController())
-                        .getFunctions().get(goodVoxel[0], goodVoxel[1]);
-                target4.add(robot);
-                target4.add(new Robot(new StepController(new DistributedSensing(1,
-                        Grid.create(robot.getVoxels().getW(), robot.getVoxels().getH(), optFunction.getInputDimension()),
-                        Grid.create(booleanBody.getW(), booleanBody.getH(), optFunction.getOutputDimension()),
-                        Grid.create(booleanBody.getW(), booleanBody.getH(), SerializationUtils.clone(optFunction))), 0.2),
-                        RobotUtils.buildSensorizingFunction("uniform-t+a+vxy-0")
-                                .apply(Analyzer.getBooleanBodyMatrix(postrobots.get(bestindex).get(bestpostindex)))));
-                Robot post = postrobots.get(bestindex).get(bestpostindex);
-                Grid<NamedValue<Robot>> namedSolutions = Grid.create(1, 2);
-                for (int i = 0; i < 2; i++) {
-                    namedSolutions.set(0, i, new NamedValue<>(Integer.toString(i), target4.get(i)));
-                }
-                GridFileWriter.save(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), namedSolutions, 1500, 900,
-                        0, 30, VideoUtils.EncoderFacility.JCODEC,
-                        new File("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos\\Small stuff\\Biped_base-pre.mov"));
-                GridFileWriter.save(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), post, 1500, 900,
-                        0, 30, VideoUtils.EncoderFacility.JCODEC,
-                        new File("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos\\Small stuff\\Biped_post.mov"));
-            } catch (Exception e) {
-                e.printStackTrace();
+    public static void videos() {
+        try {
+            List<List<Robot>> postrobots = new ArrayList<>();
+            List<List<Robot>> kickrobots = new ArrayList<>();
+            List<List<Double>> results = new ArrayList<>();
+            List<Robot>[] temprobots1, temprobots2;
+            List<Double>[] tempresults;
+            List<Robot> bestrobots = new ArrayList<>();
+            List<Double> bestresults = new ArrayList<>();
+            List<Robot> target4 = new ArrayList<>();
+            for (int number = 1; number < 11; number++) {
+                temprobots1 = Analyzer.deserializeRobots(
+                        String.format("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\post_robots_biped_%d.csv", number));
+                temprobots2 = Analyzer.deserializeRobots(
+                        String.format("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\kick_robots_biped_%d.csv", number));
+                tempresults = Analyzer.importResults(
+                        String.format("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Pre-med-postevolve\\biped_postevolve_%d.csv", number));
+                bestrobots.addAll(temprobots1[0]);
+                bestresults.addAll(tempresults[0]);
+                postrobots.add(temprobots1[1]);
+                kickrobots.add(temprobots2[1]);
+                results.add(tempresults[1]);
             }
+            int bestindex = 4;
+            int bestpostindex = 9;
+            Robot robot = bestrobots.get(bestindex);
+            Grid<Boolean> booleanBody = Analyzer.getBooleanBodyMatrix(robot);
+            int[] goodVoxel = BreakGrid.getTrueElement(Analyzer.getBooleanBodyMatrix(robot));
+            TimedRealFunction optFunction = ((DistributedSensing) ((StepController) robot.getController()).getInnermostController())
+                    .getFunctions().get(goodVoxel[0], goodVoxel[1]);
+            target4.add(robot);
+            target4.add(new Robot(new StepController(new DistributedSensing(1,
+                    Grid.create(robot.getVoxels().getW(), robot.getVoxels().getH(), optFunction.getInputDimension()),
+                    Grid.create(booleanBody.getW(), booleanBody.getH(), optFunction.getOutputDimension()),
+                    Grid.create(booleanBody.getW(), booleanBody.getH(), SerializationUtils.clone(optFunction))), 0.2),
+                    RobotUtils.buildSensorizingFunction("uniform-t+a+vxy-0")
+                            .apply(Analyzer.getBooleanBodyMatrix(postrobots.get(bestindex).get(bestpostindex)))));
+            Robot post = postrobots.get(bestindex).get(bestpostindex);
+            Grid<NamedValue<Robot>> namedSolutions = Grid.create(1, 2);
+            for (int i = 0; i < 2; i++) {
+                namedSolutions.set(0, i, new NamedValue<>(Integer.toString(i), target4.get(i)));
+            }
+            GridFileWriter.save(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), namedSolutions, 1500, 900,
+                    0, 30, VideoUtils.EncoderFacility.JCODEC,
+                    new File("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos\\Small stuff\\Biped_base-pre.mov"));
+            GridFileWriter.save(new Locomotion(30, Locomotion.createTerrain("flat"), new Settings()), post, 1500, 900,
+                    0, 30, VideoUtils.EncoderFacility.JCODEC,
+                    new File("C:\\Users\\Francesco\\Desktop\\Università\\Tesi\\Risultati\\Videos\\Small stuff\\Biped_post.mov"));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 }
